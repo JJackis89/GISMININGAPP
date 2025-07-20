@@ -17,6 +17,15 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
-    sourcemap: false
+    sourcemap: false,
+    rollupOptions: {
+      external: (id) => {
+        // Handle problematic core-js modules
+        if (id.includes('core-js') || id.includes('define-globalThis-property')) {
+          return false
+        }
+        return false
+      }
+    }
   }
 })
