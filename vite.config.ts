@@ -5,7 +5,7 @@ export default defineConfig({
   plugins: [react()],
   base: '/GISMININGAPP/', 
   optimizeDeps: {
-    exclude: ['@arcgis/core', 'core-js']
+    exclude: ['@arcgis/core']
   },
   define: {
     global: 'globalThis'
@@ -18,20 +18,25 @@ export default defineConfig({
     outDir: 'dist',
     assetsDir: 'assets',
     sourcemap: false,
-    target: 'es2020', // Changed to es2020 to support BigInt literals
+    target: 'es2020',
+    commonjsOptions: {
+      include: [/node_modules/],
+      transformMixedEsModules: true
+    },
     rollupOptions: {
       external: (id) => {
-        // Externalize all core-js related modules
-        if (id.includes('core-js') || 
-            id.includes('globalThis') || 
-            id.includes('define-globalThis-property') ||
-            id.includes('../internals/')) {
+        if (id.includes('core-js/internals/') || 
+            id.includes('../internals/') ||
+            id.includes('define-globalThis-property')) {
           return true;
         }
         return false;
       },
       output: {
-        format: 'es'
+        format: 'es',
+        globals: {
+          '../internals/define-globalThis-property': 'globalThis'
+        }
       }
     }
   }
