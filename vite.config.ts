@@ -3,9 +3,9 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  base: '/GISMININGAPP/', // Repository name for JJackis89/GISMININGAPP
+  base: '/GISMININGAPP/', 
   optimizeDeps: {
-    exclude: ['@arcgis/core']
+    exclude: ['@arcgis/core', 'core-js']
   },
   define: {
     global: 'globalThis'
@@ -18,13 +18,20 @@ export default defineConfig({
     outDir: 'dist',
     assetsDir: 'assets',
     sourcemap: false,
+    target: 'es2020', // Changed to es2020 to support BigInt literals
     rollupOptions: {
       external: (id) => {
-        // Handle problematic core-js modules
-        if (id.includes('core-js') || id.includes('define-globalThis-property')) {
-          return false
+        // Externalize all core-js related modules
+        if (id.includes('core-js') || 
+            id.includes('globalThis') || 
+            id.includes('define-globalThis-property') ||
+            id.includes('../internals/')) {
+          return true;
         }
-        return false
+        return false;
+      },
+      output: {
+        format: 'es'
       }
     }
   }
