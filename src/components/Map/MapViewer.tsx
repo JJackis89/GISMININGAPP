@@ -34,118 +34,162 @@ export default function MapViewer({ className = '', onDataLoaded }: MapViewerPro
         return
       }
 
-      if (!window.require) {
-        console.error('❌ ArcGIS API not available')
-        setErrorMessage('ArcGIS API not loaded. Please check your internet connection.')
+      // Check if ArcGIS API is available
+      if (typeof window === 'undefined') {
+        console.error('❌ Window object not available')
+        setErrorMessage('Application not running in browser environment')
         setMapStatus('error')
         return
       }
 
-      console.log('🚀 Initializing ArcGIS map with your real data...')
+      // Wait for ArcGIS API to be fully loaded
+      const waitForArcGIS = () => {
+        if (!window.require || !window.require.on) {
+          console.log('⏳ Waiting for ArcGIS API to load...')
+          setTimeout(waitForArcGIS, 100)
+          return
+        }
 
-      window.require([
-        'esri/views/MapView',
-        'esri/WebMap',
-        'esri/widgets/BasemapToggle',
-        'esri/widgets/Fullscreen',
-        'esri/widgets/ScaleBar'
-      ], (MapView: any, WebMap: any, BasemapToggle: any, Fullscreen: any, ScaleBar: any) => {
-        try {
-          console.log('📦 ArcGIS modules loaded')
-          
-          // Load your custom web map directly
-          const webmap = new WebMap({
-            portalItem: {
-              id: 'b7d490ce18644f9c8f38989586c4d0d4'
-            }
-          })
+        console.log('🚀 Initializing ArcGIS map with your real data...')
 
-          mapView.current = new MapView({
-            container: mapDiv.current,
-            map: webmap,
-            center: [-1.0232, 7.9465], // Ghana center
-            zoom: 6,
-            constraints: {
-              minZoom: 5,
-              maxZoom: 18
-            }
-          })
-
-          // Add map controls
-          const basemapToggle = new BasemapToggle({
-            view: mapView.current,
-            nextBasemap: 'streets-navigation-vector'
-          })
-
-          const fullscreen = new Fullscreen({
-            view: mapView.current
-          })
-
-          const scaleBar = new ScaleBar({
-            view: mapView.current,
-            unit: 'metric'
-          })
-
-          mapView.current.ui.add(basemapToggle, 'bottom-left')
-          mapView.current.ui.add(fullscreen, 'top-right')
-          mapView.current.ui.add(scaleBar, 'bottom-right')
-
-          // Wait for map to load
-          mapView.current.when(async () => {
-            console.log('✅ Your mining concessions map loaded successfully!')
-            setMapStatus('loaded')
+        window.require([
+          'esri/views/MapView',
+          'esri/WebMap',
+          'esri/widgets/BasemapToggle',
+          'esri/widgets/Fullscreen',
+          'esri/widgets/ScaleBar',
+          'esri/config'
+        ], (MapView: any, WebMap: any, BasemapToggle: any, Fullscreen: any, ScaleBar: any, esriConfig: any) => {
+          try {
+            console.log('📦 ArcGIS modules loaded')
             
-            // Initialize the mining data service
-            try {
-              await miningDataService.initialize()
-              if (onDataLoaded) {
-                onDataLoaded(miningDataService)
-              }
-              console.log('✅ Mining data service initialized and ready')
-            } catch (error) {
-              console.error('❌ Failed to initialize data service:', error)
-            }
+            // Configure for production
+            esriConfig.apiKey = null // Use default public access
             
-            // Access your real data
-            console.log('📊 Your web map contains:')
-            console.log('- Basemap:', webmap.basemap?.title || 'Unknown')
-            console.log('- Data layers:', webmap.layers?.length || 0)
-            
-            if (webmap.layers && webmap.layers.length > 0) {
-              webmap.layers.forEach((layer: any, index: number) => {
-                console.log(`  ${index + 1}. ${layer.title} (${layer.type})`)
-                
-                // Query the real mining concession data
-                if (layer.type === 'feature') {
-                  layer.when(() => {
-                    layer.queryFeatures().then((featureSet: any) => {
-                      console.log(`📊 Found ${featureSet.features.length} mining concessions`)
-                      if (featureSet.features.length > 0) {
-                        console.log('Sample concession data:', featureSet.features[0].attributes)
-                      }
-                    }).catch((error: any) => {
-                      console.warn(`Could not query ${layer.title}:`, error)
-                    })
-                  })
+            // Create a fallback basemap first
+            const createFallbackMap = () => {
+              return new MapView({
+                container: mapDiv.current,
+                map: {
+                  basemap: 'streets-navigation-vector'
+                },
+                center: [-1.0232, 7.9465], // Ghana center
+                zoom: 6,
+                constraints: {
+                  minZoom: 5,
+                  maxZoom: 18
                 }
               })
             }
-          }).catch((error: any) => {
-            console.error('❌ Map loading failed:', error)
-            setErrorMessage(`Map loading failed: ${error.message}`)
-            setMapStatus('error')
-          })
+            
+            // Try to load the custom web map first, fallback to simple map
+            const webmap = new WebMap({
+              portalItem: {
+                id: 'b7d490ce18644f9c8f38989586c4d0d4'
+              }
+            })
 
-        } catch (error: any) {
-          console.error('❌ Error creating map:', error)
-          setErrorMessage(`Map creation failed: ${error.message}`)
+            // Check if webmap loads successfully
+            webmap.when(() => {
+              console.log('✅ Custom web map loaded successfully')
+              mapView.current = new MapView({
+                container: mapDiv.current,
+                map: webmap,
+                center: [-1.0232, 7.9465], // Ghana center
+                zoom: 6,
+                constraints: {
+                  minZoom: 5,
+                  maxZoom: 18
+                }
+              })
+              setupMapAndContinue()
+            }).catch((error: any) => {
+              console.warn('⚠️ Custom web map failed to load, using fallback:', error)
+              mapView.current = createFallbackMap()
+              setupMapAndContinue()
+            })
+
+            const setupMapAndContinue = () => {
+              // Add map controls
+              const basemapToggle = new BasemapToggle({
+                view: mapView.current,
+                nextBasemap: 'streets-navigation-vector'
+              })
+
+              const fullscreen = new Fullscreen({
+                view: mapView.current
+              })
+
+              const scaleBar = new ScaleBar({
+                view: mapView.current,
+                unit: 'metric'
+              })
+
+              mapView.current.ui.add(basemapToggle, 'bottom-left')
+              mapView.current.ui.add(fullscreen, 'top-right')
+              mapView.current.ui.add(scaleBar, 'bottom-right')
+
+              // Wait for map to load
+              mapView.current.when(async () => {
+                console.log('✅ Your mining concessions map loaded successfully!')
+                setMapStatus('loaded')
+                
+                // Initialize the mining data service
+                try {
+                  await miningDataService.initialize()
+                  if (onDataLoaded) {
+                    onDataLoaded(miningDataService)
+                  }
+                  console.log('✅ Mining data service initialized and ready')
+                } catch (error) {
+                  console.error('❌ Failed to initialize data service:', error)
+                }
+                
+                // Access your real data
+                const currentMap = mapView.current.map
+                console.log('📊 Your map contains:')
+                console.log('- Basemap:', currentMap.basemap?.title || 'Unknown')
+                console.log('- Data layers:', currentMap.layers?.length || 0)
+                
+                if (currentMap.layers && currentMap.layers.length > 0) {
+                  currentMap.layers.forEach((layer: any, index: number) => {
+                    console.log(`  ${index + 1}. ${layer.title} (${layer.type})`)
+                    
+                    // Query the real mining concession data
+                    if (layer.type === 'feature') {
+                      layer.when(() => {
+                        layer.queryFeatures().then((featureSet: any) => {
+                          console.log(`📊 Found ${featureSet.features.length} mining concessions`)
+                          if (featureSet.features.length > 0) {
+                            console.log('Sample concession data:', featureSet.features[0].attributes)
+                          }
+                        }).catch((error: any) => {
+                          console.warn(`Could not query ${layer.title}:`, error)
+                        })
+                      })
+                    }
+                  })
+                }
+              }).catch((error: any) => {
+                console.error('❌ Map loading failed:', error)
+                setErrorMessage(`Map loading failed: ${error.message}`)
+                setMapStatus('error')
+              })
+            }
+
+          } catch (error: any) {
+            console.error('❌ Error creating map:', error)
+            setErrorMessage(`Map creation failed: ${error.message}`)
+            setMapStatus('error')
+          }
+        }, (error: any) => {
+          console.error('❌ Failed to load ArcGIS modules:', error)
+          setErrorMessage('Failed to load ArcGIS modules')
           setMapStatus('error')
-        }
-      }, (error: any) => {
-        console.error('❌ Failed to load ArcGIS modules:', error)
-        setErrorMessage('Failed to load ArcGIS modules')
-        setMapStatus('error')
-      })
+        })
+      }
+
+      waitForArcGIS()
     }
 
     initializeMap()
