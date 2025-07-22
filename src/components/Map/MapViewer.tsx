@@ -44,138 +44,102 @@ export default function MapViewer({ className = '', onDataLoaded }: MapViewerPro
 
       // Wait for ArcGIS API to be fully loaded
       const waitForArcGIS = () => {
-        if (!window.require || !window.require.on) {
+        if (!window.require) {
           console.log('⏳ Waiting for ArcGIS API to load...')
           setTimeout(waitForArcGIS, 100)
           return
         }
 
-        console.log('🚀 Initializing ArcGIS map with your real data...')
+        console.log('🚀 ArcGIS API detected, initializing map...')
 
         window.require([
           'esri/views/MapView',
+          'esri/Map',
           'esri/WebMap',
           'esri/widgets/BasemapToggle',
           'esri/widgets/Fullscreen',
-          'esri/widgets/ScaleBar',
-          'esri/config'
-        ], (MapView: any, WebMap: any, BasemapToggle: any, Fullscreen: any, ScaleBar: any, esriConfig: any) => {
+          'esri/widgets/ScaleBar'
+        ], (MapView: any, Map: any, WebMap: any, BasemapToggle: any, Fullscreen: any, ScaleBar: any) => {
           try {
-            console.log('📦 ArcGIS modules loaded')
+            console.log('📦 ArcGIS modules loaded successfully')
             
-            // Configure for production
-            esriConfig.apiKey = null // Use default public access
-            
-            // Create a fallback basemap first
-            const createFallbackMap = () => {
-              return new MapView({
-                container: mapDiv.current,
-                map: {
-                  basemap: 'streets-navigation-vector'
-                },
-                center: [-1.0232, 7.9465], // Ghana center
-                zoom: 6,
-                constraints: {
-                  minZoom: 5,
-                  maxZoom: 18
-                }
-              })
-            }
-            
-            // Try to load the custom web map first, fallback to simple map
-            const webmap = new WebMap({
-              portalItem: {
-                id: 'b7d490ce18644f9c8f38989586c4d0d4'
+            // First try a simple map
+            console.log('🗺️ Creating basic map for Ghana...')
+            const basicMap = new Map({
+              basemap: 'streets-navigation-vector'
+            })
+
+            mapView.current = new MapView({
+              container: mapDiv.current,
+              map: basicMap,
+              center: [-1.0232, 7.9465], // Ghana center
+              zoom: 6,
+              constraints: {
+                minZoom: 5,
+                maxZoom: 18
               }
             })
 
-            // Check if webmap loads successfully
-            webmap.when(() => {
-              console.log('✅ Custom web map loaded successfully')
-              mapView.current = new MapView({
-                container: mapDiv.current,
-                map: webmap,
-                center: [-1.0232, 7.9465], // Ghana center
-                zoom: 6,
-                constraints: {
-                  minZoom: 5,
-                  maxZoom: 18
-                }
-              })
-              setupMapAndContinue()
-            }).catch((error: any) => {
-              console.warn('⚠️ Custom web map failed to load, using fallback:', error)
-              mapView.current = createFallbackMap()
-              setupMapAndContinue()
+            // Add map controls
+            const basemapToggle = new BasemapToggle({
+              view: mapView.current,
+              nextBasemap: 'satellite'
             })
 
-            const setupMapAndContinue = () => {
-              // Add map controls
-              const basemapToggle = new BasemapToggle({
-                view: mapView.current,
-                nextBasemap: 'streets-navigation-vector'
+            const fullscreen = new Fullscreen({
+              view: mapView.current
+            })
+
+            const scaleBar = new ScaleBar({
+              view: mapView.current,
+              unit: 'metric'
+            })
+
+            mapView.current.ui.add(basemapToggle, 'bottom-left')
+            mapView.current.ui.add(fullscreen, 'top-right')
+            mapView.current.ui.add(scaleBar, 'bottom-right')
+
+            // Wait for basic map to load
+            mapView.current.when(() => {
+              console.log('✅ Basic map loaded successfully!')
+              setMapStatus('loaded')
+              
+              // Now try to load the custom WebMap data as an additional layer
+              console.log('🔄 Attempting to load EPA mining data...')
+              const webmap = new WebMap({
+                portalItem: {
+                  id: 'b7d490ce18644f9c8f38989586c4d0d4'
+                }
               })
 
-              const fullscreen = new Fullscreen({
-                view: mapView.current
-              })
-
-              const scaleBar = new ScaleBar({
-                view: mapView.current,
-                unit: 'metric'
-              })
-
-              mapView.current.ui.add(basemapToggle, 'bottom-left')
-              mapView.current.ui.add(fullscreen, 'top-right')
-              mapView.current.ui.add(scaleBar, 'bottom-right')
-
-              // Wait for map to load
-              mapView.current.when(async () => {
-                console.log('✅ Your mining concessions map loaded successfully!')
-                setMapStatus('loaded')
+              webmap.when(() => {
+                console.log('✅ EPA WebMap loaded, adding layers to map...')
+                if (webmap.layers && webmap.layers.length > 0) {
+                  webmap.layers.forEach((layer: any) => {
+                    console.log(`Adding layer: ${layer.title}`)
+                    mapView.current.map.add(layer)
+                  })
+                }
                 
                 // Initialize the mining data service
-                try {
-                  await miningDataService.initialize()
+                miningDataService.initialize().then(() => {
                   if (onDataLoaded) {
                     onDataLoaded(miningDataService)
                   }
-                  console.log('✅ Mining data service initialized and ready')
-                } catch (error) {
-                  console.error('❌ Failed to initialize data service:', error)
-                }
-                
-                // Access your real data
-                const currentMap = mapView.current.map
-                console.log('📊 Your map contains:')
-                console.log('- Basemap:', currentMap.basemap?.title || 'Unknown')
-                console.log('- Data layers:', currentMap.layers?.length || 0)
-                
-                if (currentMap.layers && currentMap.layers.length > 0) {
-                  currentMap.layers.forEach((layer: any, index: number) => {
-                    console.log(`  ${index + 1}. ${layer.title} (${layer.type})`)
-                    
-                    // Query the real mining concession data
-                    if (layer.type === 'feature') {
-                      layer.when(() => {
-                        layer.queryFeatures().then((featureSet: any) => {
-                          console.log(`📊 Found ${featureSet.features.length} mining concessions`)
-                          if (featureSet.features.length > 0) {
-                            console.log('Sample concession data:', featureSet.features[0].attributes)
-                          }
-                        }).catch((error: any) => {
-                          console.warn(`Could not query ${layer.title}:`, error)
-                        })
-                      })
-                    }
-                  })
-                }
+                  console.log('✅ Mining data service initialized')
+                }).catch((error: any) => {
+                  console.warn('⚠️ Mining data service initialization failed:', error)
+                })
               }).catch((error: any) => {
-                console.error('❌ Map loading failed:', error)
-                setErrorMessage(`Map loading failed: ${error.message}`)
-                setMapStatus('error')
+                console.warn('⚠️ EPA WebMap failed to load, but basic map is working:', error)
+                // Basic map still works even if EPA data fails
               })
-            }
+
+            }).catch((error: any) => {
+              console.error('❌ Basic map loading failed:', error)
+              setErrorMessage(`Map loading failed: ${error.message}`)
+              setMapStatus('error')
+            })
 
           } catch (error: any) {
             console.error('❌ Error creating map:', error)

@@ -1,0 +1,42 @@
+<!-- EPA Ghana Logo -->
+<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <!-- Main orange circular background -->
+  <circle cx="60" cy="60" r="58" fill="#f97316" stroke="#ea580c" stroke-width="2"/>
+  
+  <!-- Inner light background -->
+  <circle cx="60" cy="60" r="50" fill="#fff7ed"/>
+  
+  <!-- Green plant/leaf symbol (top) -->
+  <g transform="translate(60, 35)">
+    <!-- Central stem -->
+    <rect x="-1" y="0" width="2" height="25" fill="#166534"/>
+    
+    <!-- Leaves arranged symmetrically -->
+    <ellipse cx="-6" cy="3" rx="5" ry="2.5" fill="#22c55e" transform="rotate(-35)"/>
+    <ellipse cx="6" cy="3" rx="5" ry="2.5" fill="#22c55e" transform="rotate(35)"/>
+    <ellipse cx="-8" cy="10" rx="6" ry="3" fill="#16a34a" transform="rotate(-25)"/>
+    <ellipse cx="8" cy="10" rx="6" ry="3" fill="#16a34a" transform="rotate(25)"/>
+    <ellipse cx="-6" cy="17" rx="5" ry="2.5" fill="#22c55e" transform="rotate(-15)"/>
+    <ellipse cx="6" cy="17" rx="5" ry="2.5" fill="#22c55e" transform="rotate(15)"/>
+  </g>
+  
+  <!-- Blue water waves (middle) -->
+  <g transform="translate(60, 70)">
+    <path d="M-25,0 Q-20,-3 -15,0 Q-10,3 -5,0 Q0,-3 5,0 Q10,3 15,0 Q20,-3 25,0" 
+          stroke="#3b82f6" stroke-width="2.5" fill="none"/>
+    <path d="M-25,6 Q-20,3 -15,6 Q-10,9 -5,6 Q0,3 5,6 Q10,9 15,6 Q20,3 25,6" 
+          stroke="#2563eb" stroke-width="2" fill="none"/>
+  </g>
+  
+  <!-- Green hills/ground (bottom) -->
+  <path d="M20,82 Q40,78 60,82 Q80,78 100,82 L100,95 L20,95 Z" fill="#16a34a"/>
+  
+  <!-- EPA text -->
+  <text x="30" y="110" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="white">epa</text>
+  
+  <!-- Partnership/handshake symbol -->
+  <g transform="translate(85, 100)">
+    <path d="M0,0 L6,-2 L12,0 L15,3 L12,6 L6,4 L0,6 L-3,3 Z" 
+          fill="white" stroke="#ea580c" stroke-width="1"/>
+  </g>
+</svg>
