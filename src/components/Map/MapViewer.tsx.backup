@@ -1,0 +1,169 @@
+import { useEffect, useRef, useState } from 'react'
+import      // Use the simplest possible ArcGIS map
+      window.require(['esri/Map', 'esri/views/MapView'], (Map: any, MapView: any) => {
+        try {
+          console.log('🗺️ Creating basic map...')
+          
+          const map = new Map({
+            basemap: 'gray-vector'  // Simple gray basemap
+          })
+
+          console.log('🗺️ Creating map view...')
+          
+          const view = new MapView({aService } from '../../services/miningDataService'
+
+interface MapViewerProps {
+  className?: string
+  onDataLoaded?: (dataService: typeof miningDataService) => void
+}
+
+declare global {
+  interface Window {
+    require: any
+  }
+}
+
+export default function MapViewer({ className = '', onDataLoaded }: MapViewerProps) {
+  const mapDiv = useRef<HTMLDivElement>(null)
+  const mapView = useRef<any>(null)
+  const [mapStatus, setMapStatus] = useState<'loading' | 'loaded' | 'error'>('loading')
+  const [errorMessage, setErrorMessage] = useState<string>('')
+
+  useEffect(() => {
+    console.log('🔧 MapViewer useEffect triggered - component is mounting')
+    
+    // Prevent multiple initializations
+    if (mapView.current) {
+      console.log('⚠️ Map already exists, skipping initialization')
+      return
+    }
+
+    const initializeMap = () => {
+      if (!mapDiv.current) {
+        console.error('❌ Map container div not found, retrying in 100ms...')
+        setTimeout(initializeMap, 100)
+        return
+      }
+
+      console.log('📱 Map container found:', mapDiv.current)
+      console.log('📏 Container dimensions:', mapDiv.current.offsetWidth, 'x', mapDiv.current.offsetHeight)
+
+      // Add a visible indicator that the component is working
+      if (mapDiv.current) {
+        mapDiv.current.style.backgroundColor = '#e0e0e0'
+        mapDiv.current.style.border = '2px solid red'
+        mapDiv.current.innerHTML = '<div style="padding: 20px; text-align: center; color: black;">MapViewer Component Active<br/>Attempting to load ArcGIS...</div>'
+      }
+
+      // Check if ArcGIS API is available
+      if (!window.require) {
+        console.error('❌ ArcGIS API not loaded')
+        setErrorMessage('ArcGIS API not available')
+        setMapStatus('error')
+        if (mapDiv.current) {
+          mapDiv.current.innerHTML = '<div style="padding: 20px; text-align: center; color: red;">ArcGIS API not available</div>'
+        }
+        return
+      }
+
+      console.log('✅ ArcGIS API found, creating simple map...')
+
+      // Use the simplest possible ArcGIS map
+      window.require(['esri/Map', 'esri/views/MapView'], (Map: any, MapView: any) => {
+        try {
+          console.log('�️ Creating basic map...')
+          
+          const map = new Map({
+            basemap: 'gray-vector'  // Simple gray basemap
+          })
+
+          console.log('�️ Creating map view...')
+          
+          const view = new MapView({
+            container: mapDiv.current,
+            map: map,
+            center: [-1, 8], // Ghana area
+            zoom: 6
+          })
+
+          mapView.current = view
+
+          view.when(() => {
+            console.log('🎉 Simple map loaded successfully!')
+            setMapStatus('loaded')
+            
+            // Add visual confirmation
+            if (mapDiv.current) {
+              mapDiv.current.style.border = '3px solid green'
+            }
+          }).catch((error: any) => {
+            console.error('❌ Map view failed:', error)
+            setMapStatus('error')
+            setErrorMessage(`Map failed: ${error.message}`)
+          })
+
+        } catch (error: any) {
+          console.error('❌ Error creating map:', error)
+          setMapStatus('error')
+          setErrorMessage(`Map creation failed: ${error.message}`)
+          if (mapDiv.current) {
+            mapDiv.current.innerHTML = `<div style="padding: 20px; text-align: center; color: red;">Error: ${error.message}</div>`
+          }
+        }
+      })
+    }
+
+    // Initialize map
+    initializeMap()
+
+    // Cleanup
+    return () => {
+      if (mapView.current) {
+        mapView.current.destroy()
+        mapView.current = null
+        console.log('🧹 Map view cleaned up')
+      }
+    }
+  }, [onDataLoaded])
+
+  // Render based on status
+  if (mapStatus === 'error') {
+    return (
+      <div className={`w-full h-full flex items-center justify-center bg-gray-100 ${className}`}>
+        <div className="text-center p-6">
+          <div className="text-red-500 text-5xl mb-4">⚠️</div>
+          <h3 className="text-lg font-semibold text-gray-800 mb-2">Map Loading Error</h3>
+          <p className="text-gray-600">{errorMessage}</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className={`w-full h-full relative ${className}`} style={{ minHeight: '400px', backgroundColor: '#f9f9f9' }}>
+      <div 
+        ref={mapDiv} 
+        className="w-full h-full" 
+        style={{ 
+          minHeight: '400px',
+          backgroundColor: '#e0e0e0',
+          border: '1px solid #ccc'
+        }}
+      >
+        {/* Fallback content in case map doesn't load */}
+        <div className="p-4 text-center text-gray-600">
+          Map container ready...
+        </div>
+      </div>
+      {mapStatus === 'loading' && (
+        <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10">
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+            <p className="mt-4 text-gray-600">Loading Mining Concessions Map...</p>
+            <p className="text-sm text-gray-500">Loading your real data with 71 concessions</p>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}

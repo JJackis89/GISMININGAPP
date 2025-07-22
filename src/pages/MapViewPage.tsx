@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import MapViewer from '../components/Map/MapViewer'
-import { Layers, MapPin, Search, Filter, Download, Maximize2, BarChart3, FileText } from 'lucide-react'
 import { miningDataService } from '../services/miningDataService'
 import { MiningConcession } from '../types'
 import AnalyticsPanel from '../components/AnalyticsPanel'
@@ -94,81 +93,86 @@ export default function MapViewPage() {
     }
   }
 
+  // Find user location function
+  const findMyLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords
+          console.log(`📍 User location found: ${latitude}, ${longitude}`)
+          alert(`Location found: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`)
+        },
+        (error) => {
+          console.error('Error finding location:', error)
+          alert('Could not find your location. Please enable location services.')
+        }
+      )
+    } else {
+      alert('Geolocation is not supported by this browser.')
+    }
+  }
+
+  // Export map functionality
+  const exportMap = () => {
+    console.log('📥 Exporting map data...')
+    if (filteredConcessions.length > 0) {
+      const csvData = [
+        ['Name', 'Owner', 'Region', 'District', 'Size (ha)', 'Status'],
+        ...filteredConcessions.map(c => [
+          c.name, c.owner, c.region, c.district || '', c.size.toString(), c.status
+        ])
+      ]
+      
+      const csvContent = csvData.map(row => row.join(',')).join('\n')
+      const blob = new Blob([csvContent], { type: 'text/csv' })
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `mining_concessions_${new Date().toISOString().split('T')[0]}.csv`
+      a.click()
+      window.URL.revokeObjectURL(url)
+      
+      console.log(`✅ Exported ${filteredConcessions.length} concessions to CSV`)
+      alert(`Exported ${filteredConcessions.length} concessions to CSV file`)
+    } else {
+      alert('No data to export. Please load data first.')
+    }
+  }
+
+  // Toggle fullscreen
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().then(() => {
+        console.log('🖥️ Entered fullscreen mode')
+      }).catch((error) => {
+        console.error('Error entering fullscreen:', error)
+        alert('Could not enter fullscreen mode')
+      })
+    } else {
+      document.exitFullscreen().then(() => {
+        console.log('🖥️ Exited fullscreen mode')
+      })
+    }
+  }
+
+  // Filter functionality
+  const openFilterPanel = () => {
+    const filterValue = prompt('Enter filter criteria (e.g., region name):')
+    if (filterValue) {
+      const filtered = concessions.filter(c => 
+        c.region.toLowerCase().includes(filterValue.toLowerCase()) ||
+        c.name.toLowerCase().includes(filterValue.toLowerCase()) ||
+        c.owner.toLowerCase().includes(filterValue.toLowerCase())
+      )
+      setFilteredConcessions(filtered)
+      console.log(`🔍 Filtered to ${filtered.length} concessions`)
+      alert(`Found ${filtered.length} matching concessions`)
+    }
+  }
+
   return (
     <div className="h-[calc(100vh-120px)] bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 relative">
-      {/* Map Toolbar */}
-      <div className="absolute top-4 left-4 z-10 bg-white rounded-lg shadow-lg border border-gray-200 p-2">
-        <div className="flex space-x-2">
-          <button
-            onClick={toggleLayerPanel}
-            className={`p-2 rounded-md transition-colors ${
-              showLayerPanel ? 'bg-epa-orange-100 text-epa-orange-700' : 'hover:bg-gray-100'
-            }`}
-            title="Toggle Layers"
-          >
-            <Layers className="h-5 w-5" />
-          </button>
-          
-          <button
-            onClick={toggleSearchPanel}
-            className={`p-2 rounded-md transition-colors ${
-              showSearchPanel ? 'bg-epa-orange-100 text-epa-orange-700' : 'hover:bg-gray-100'
-            }`}
-            title="Search Locations"
-          >
-            <Search className="h-5 w-5" />
-          </button>
-          
-          <button
-            onClick={toggleAnalyticsPanel}
-            className={`p-2 rounded-md transition-colors ${
-              showAnalyticsPanel ? 'bg-epa-orange-100 text-epa-orange-700' : 'hover:bg-gray-100'
-            }`}
-            title="Analytics Dashboard"
-          >
-            <BarChart3 className="h-5 w-5" />
-          </button>
-          
-          <button
-            onClick={toggleReportsPanel}
-            className={`p-2 rounded-md transition-colors ${
-              showReportsPanel ? 'bg-epa-orange-100 text-epa-orange-700' : 'hover:bg-gray-100'
-            }`}
-            title="Generate Reports"
-          >
-            <FileText className="h-5 w-5" />
-          </button>
-          
-          <button
-            className="p-2 hover:bg-gray-100 rounded-md transition-colors"
-            title="Find My Location"
-          >
-            <MapPin className="h-5 w-5" />
-          </button>
-          
-          <button
-            className="p-2 hover:bg-gray-100 rounded-md transition-colors"
-            title="Filter Data"
-          >
-            <Filter className="h-5 w-5" />
-          </button>
-          
-          <button
-            className="p-2 hover:bg-gray-100 rounded-md transition-colors"
-            title="Export Map"
-          >
-            <Download className="h-5 w-5" />
-          </button>
-          
-          <button
-            className="p-2 hover:bg-gray-100 rounded-md transition-colors"
-            title="Fullscreen"
-          >
-            <Maximize2 className="h-5 w-5" />
-          </button>
-        </div>
-      </div>
-
+      
       {/* Layer Panel */}
       {showLayerPanel && (
         <div className="absolute top-16 left-4 z-10 w-64 bg-white rounded-lg shadow-lg border border-gray-200 p-4">

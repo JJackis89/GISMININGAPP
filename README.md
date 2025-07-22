@@ -231,6 +231,18 @@ The built files will be in the `dist/` directory.
 - `npm run lint` - Run ESLint
 - `npm run preview` - Preview production build
 
+### Development Tools
+
+**React DevTools**: For a better development experience, install the React Developer Tools browser extension:
+- [Chrome Web Store](https://reactjs.org/link/react-devtools)
+- [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/react-devtools/)
+
+This extension provides:
+- Component tree inspection
+- Props and state debugging
+- Performance profiling
+- Hooks debugging
+
 ### Adding New Features
 
 1. Create components in appropriate directories

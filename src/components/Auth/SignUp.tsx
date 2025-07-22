@@ -51,7 +51,7 @@ export default function SignUp({ onBackToLogin }: SignUpProps) {
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
-            backgroundImage: 'url("/images/mining-operation.jpg")',
+            backgroundImage: 'url("/images/mining-operation.svg")',
           }}
         >
           <div className="absolute inset-0 bg-black bg-opacity-40"></div>

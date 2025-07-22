@@ -25,3 +25,43 @@
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
 }
+
+/* Ensure map container takes full space */
+.esri-view {
+  height: 100% !important;
+  width: 100% !important;
+}
+
+/* Style popup content */
+.esri-popup__content {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.popup-content .esri-widget__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.popup-content .esri-widget__table td {
+  padding: 8px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.popup-content .esri-widget__table td:first-child {
+  font-weight: bold;
+  width: 40%;
+}
+
+/* Custom widget positioning */
+.esri-ui-top-left .esri-component {
+  margin: 10px 0;
+}
+
+.esri-ui-top-right .esri-component {
+  margin: 10px 0;
+}
+
+.esri-ui-bottom-left .esri-component {
+  margin: 10px 0;
+}
