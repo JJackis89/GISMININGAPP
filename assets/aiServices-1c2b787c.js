@@ -1,0 +1,1 @@
+import"./index-f00bd99f.js";import{S as s,g as i,w as n,T as c}from"./aiServices-6ea2feb8.js";import"./number-45d97d9b.js";import"./commonProperties-da958896.js";export{s as BatchTranslationServiceFactory,i as PortalTranslationService,n as getTranslateParametersKey,c as registerFunctions};

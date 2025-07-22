@@ -1,1 +1,0 @@
-import{f as i}from"./index-8ee34b61.js";import{i as r}from"./projectPointToVector-030380a1.js";function a(e,t,l,o){return{x:e,y:t,z:l,hasZ:l!=null,hasM:!1,spatialReference:o,type:"point"}}function s(e,t,l,o,f){return!(t==null||o==null||e.length<2)&&(n.x=e[0],n.y=e[1],n.z=e[2],n.spatialReference=t,r(n,l,o,f))}const n=a(0,0,0,i.WGS84);export{s as n};
