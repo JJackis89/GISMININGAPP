@@ -42,30 +42,32 @@ const createMockClient = () => ({
   }
 })
 
-// Create client with robust error handling
+// Create client with ultra-safe error handling
 let supabase: any
 
-if (hasRealCredentials) {
-  console.log('✅ Using real Supabase credentials')
-  try {
-    // Create client with minimal, safe configuration
-    supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: false
-      }
-    })
+try {
+  if (hasRealCredentials) {
+    console.log('✅ Attempting to create Supabase client with real credentials')
+    
+    // Use the most basic configuration possible
+    supabase = createClient(supabaseUrl, supabaseAnonKey)
     
     console.log('✅ Supabase client created successfully')
-  } catch (error) {
-    console.error('❌ Failed to create Supabase client:', error)
-    console.log('🔄 Falling back to demo mode')
+    
+    // Test the client immediately to catch any runtime errors
+    supabase.auth.getSession().catch((testError: any) => {
+      console.warn('⚠️ Supabase client test failed, but client exists:', testError)
+      // Don't switch to mock client here, let the app handle auth errors gracefully
+    })
+    
+  } else {
+    console.warn('⚠️ No valid Supabase credentials found - using demo mode')
+    console.log('🔄 App will run in demonstration mode with sample data')
     supabase = createMockClient()
   }
-} else {
-  console.warn('⚠️ No valid Supabase credentials found - using demo mode')
-  console.log('🔄 App will run in demonstration mode with sample data')
+} catch (error) {
+  console.error('❌ Failed to create Supabase client:', error)
+  console.log('🔄 Falling back to demo mode due to initialization error')
   supabase = createMockClient()
 }
 

@@ -10,6 +10,7 @@ The Environmental Protection Authority (EPA) of Ghana is responsible for the pro
 
 ## 🌐 Live Demo
 
+**Vercel (Production)**: Coming soon - deploying with Supabase authentication  
 **GitHub Pages**: [https://JJackis89.github.io/GISMININGAPP/](https://JJackis89.github.io/GISMININGAPP/)
 
 ## � Quick Start

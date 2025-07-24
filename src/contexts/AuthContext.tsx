@@ -43,14 +43,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // Check if we're in a deployed environment and handle network errors
         const isDeployment = window.location.hostname !== 'localhost'
         
-        // Get initial session with network error handling
+        // Get initial session with enhanced error handling
         let session = null
         let error = null
         
         try {
-          const response = await supabase.auth.getSession()
-          session = response.data?.session
-          error = response.error
+          // Wrap the Supabase call in additional error handling
+          if (supabase && typeof supabase.auth?.getSession === 'function') {
+            const response = await supabase.auth.getSession()
+            session = response.data?.session
+            error = response.error
+          } else {
+            console.warn('⚠️ Supabase client not properly initialized')
+            error = new Error('Supabase client unavailable')
+          }
         } catch (networkError) {
           console.warn('🌐 Network error during auth init, falling back to demo mode:', networkError)
           // In deployment, if Supabase fails, create a demo user
