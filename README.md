@@ -2,6 +2,8 @@
 
 A professional web-based GIS dashboard application for managing and visualizing mining concession data in Ghana. Developed for the Environmental Protection Authority (EPA) of Ghana with integrated ArcGIS Online mapping capabilities and Supabase authentication.
 
+🔧 **Status**: Live with Supabase authentication configured
+
 ## About EPA Ghana
 
 The Environmental Protection Authority (EPA) of Ghana is responsible for the protection and management of the country's environment. This system helps EPA manage mining concessions, monitor environmental compliance, and ensure sustainable mining practices across Ghana.
