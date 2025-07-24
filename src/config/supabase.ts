@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
 
-// Get environment variables
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+// Get environment variables with fallbacks
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || ''
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
 
 // Check if we have real Supabase credentials
 const hasRealCredentials = supabaseUrl && 
@@ -18,38 +18,55 @@ console.log('🔍 Supabase config check:', {
   hasRealCredentials
 })
 
-// Create client with error handling
+// Create mock client for demo purposes
+const createMockClient = () => ({
+  auth: {
+    getSession: () => Promise.resolve({ 
+      data: { session: null }, 
+      error: null 
+    }),
+    onAuthStateChange: () => ({ 
+      data: { 
+        subscription: { unsubscribe: () => {} } 
+      } 
+    }),
+    signInWithPassword: () => Promise.resolve({ 
+      data: { user: null, session: null },
+      error: null 
+    }),
+    signUp: () => Promise.resolve({ 
+      data: { user: null, session: null },
+      error: null 
+    }),
+    signOut: () => Promise.resolve({ error: null })
+  }
+})
+
+// Create client with robust error handling
 let supabase: any
 
 if (hasRealCredentials) {
   console.log('✅ Using real Supabase credentials')
   try {
+    // Create client with minimal, safe configuration
     supabase = createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
+        detectSessionInUrl: false
       }
     })
+    
+    console.log('✅ Supabase client created successfully')
   } catch (error) {
-    console.error('Failed to create Supabase client:', error)
-    throw error
+    console.error('❌ Failed to create Supabase client:', error)
+    console.log('🔄 Falling back to demo mode')
+    supabase = createMockClient()
   }
 } else {
-  console.warn('⚠️ No valid Supabase credentials found.')
-  console.log('📝 Please add your credentials to .env.local:')
-  console.log('VITE_SUPABASE_URL=https://your-project.supabase.co')
-  console.log('VITE_SUPABASE_ANON_KEY=your-anon-key')
-  
-  // Create a mock client for demo purposes
-  supabase = {
-    auth: {
-      getSession: () => Promise.resolve({ data: { session: null } }),
-      onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
-      signInWithPassword: () => Promise.resolve({ error: { message: 'Please configure your Supabase credentials in .env.local' } }),
-      signUp: () => Promise.resolve({ error: { message: 'Please configure your Supabase credentials in .env.local' } }),
-      signOut: () => Promise.resolve()
-    }
-  }
+  console.warn('⚠️ No valid Supabase credentials found - using demo mode')
+  console.log('🔄 App will run in demonstration mode with sample data')
+  supabase = createMockClient()
 }
 
 export { supabase }

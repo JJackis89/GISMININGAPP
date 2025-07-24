@@ -78,6 +78,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
         
         clearTimeout(loadingTimeout) // Clear timeout if we get a response
         
+        // In deployment mode, always create demo user if no valid session
+        if (isDeployment && !session) {
+          const demoUser: User = {
+            id: 'demo-user-001',
+            username: 'demo',
+            email: 'demo@epa.gov.gh',
+            role: 'admin',
+            firstName: 'Demo',
+            lastName: 'User'
+          }
+          setUser(demoUser)
+          localStorage.setItem('miningUser', JSON.stringify(demoUser))
+          console.log('✅ Demo user created for deployment environment')
+          setLoading(false)
+          return
+        }
+        
         if (error) {
           console.error('Session error:', error)
           // In deployment, fallback to demo mode on auth errors
