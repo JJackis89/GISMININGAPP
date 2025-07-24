@@ -5,7 +5,8 @@ import { AuthProvider } from './contexts/AuthContext.tsx'
 import './index.css'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <BrowserRouter
+  <BrowserRouter 
+    basename="/"
     future={{
       v7_startTransition: true,
       v7_relativeSplatPath: true

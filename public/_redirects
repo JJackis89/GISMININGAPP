@@ -1,0 +1,6 @@
+# Disable problematic service workers
+/cnm-sw.js  /dev/null  410
+/sw.js      /dev/null  410
+
+# SPA fallback
+/*    /index.html   200
