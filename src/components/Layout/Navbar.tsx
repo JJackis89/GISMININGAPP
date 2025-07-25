@@ -12,7 +12,7 @@ export default function Navbar() {
             <img src="/epa-logo.png" alt="EPA Logo" className="h-10 w-10" />
             <div>
               <h1 className="text-xl font-semibold text-gray-900">EPA Mining Concessions</h1>
-              <p className="text-sm text-gray-600">Environmental Protection Agency</p>
+              <p className="text-sm text-gray-600">Environmental Protection Authority</p>
             </div>
           </div>
 
@@ -26,8 +26,8 @@ export default function Navbar() {
               <div className="flex items-center space-x-2">
                 <User className="h-5 w-5 text-gray-400" />
                 <div className="text-sm">
-                  <p className="font-medium text-gray-900">{user?.firstName} {user?.lastName}</p>
-                  <p className="text-gray-500 capitalize">{user?.role}</p>
+                  <p className="font-medium text-gray-900">{user?.full_name || user?.email?.split('@')[0]}</p>
+                  <p className="text-gray-500">{user?.email}</p>
                 </div>
               </div>
               

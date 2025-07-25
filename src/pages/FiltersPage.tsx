@@ -19,7 +19,7 @@ export default function FiltersPage() {
   const [advancedFilters, setAdvancedFilters] = useState({
     sizeMin: '',
     sizeMax: '',
-    ownerSearch: '',
+    companySearch: '',
     districtSearch: '',
     permitDateFrom: '',
     permitDateTo: ''
@@ -34,6 +34,15 @@ export default function FiltersPage() {
         const realData = await miningDataService.getMiningConcessions()
         
         console.log(`✅ Loaded ${realData.length} real mining concessions for advanced filters`)
+        
+        // Debug: Show unique owners
+        const uniqueOwners = [...new Set(realData.map(c => c.owner))]
+        console.log('🏢 Unique owners in dataset:', uniqueOwners)
+        
+        // Debug: Show unique concession names
+        const uniqueNames = [...new Set(realData.map(c => c.name))]
+        console.log('📝 Unique concession names in dataset:', uniqueNames)
+        
         setConcessions(realData)
         setFilteredConcessions(realData)
       } catch (error) {
@@ -70,11 +79,17 @@ export default function FiltersPage() {
         case '30':
           windowDate.setDate(now.getDate() + 30)
           break
+        case '60':
+          windowDate.setDate(now.getDate() + 60)
+          break
         case '90':
           windowDate.setDate(now.getDate() + 90)
           break
         case '180':
           windowDate.setDate(now.getDate() + 180)
+          break
+        case '365':
+          windowDate.setDate(now.getDate() + 365)
           break
       }
 
@@ -85,32 +100,59 @@ export default function FiltersPage() {
     }
 
     // Apply advanced filters
+    if (advancedFilters.sizeMin !== '' && advancedFilters.sizeMax !== '') {
+      const minSize = parseFloat(advancedFilters.sizeMin)
+      const maxSize = parseFloat(advancedFilters.sizeMax)
+      
+      // Validate that min <= max
+      if (minSize > maxSize) {
+        console.warn('Minimum size cannot be greater than maximum size')
+        return // Return without applying invalid filter
+      }
+    }
+    
     if (advancedFilters.sizeMin) {
-      filtered = filtered.filter(c => c.size >= parseFloat(advancedFilters.sizeMin))
+      const minSize = parseFloat(advancedFilters.sizeMin)
+      filtered = filtered.filter(c => c.size >= minSize)
     }
     if (advancedFilters.sizeMax) {
-      filtered = filtered.filter(c => c.size <= parseFloat(advancedFilters.sizeMax))
+      const maxSize = parseFloat(advancedFilters.sizeMax)
+      filtered = filtered.filter(c => c.size <= maxSize)
     }
-    if (advancedFilters.ownerSearch) {
-      filtered = filtered.filter(c => 
-        c.owner.toLowerCase().includes(advancedFilters.ownerSearch.toLowerCase())
-      )
+    if (advancedFilters.companySearch) {
+      const searchTerm = advancedFilters.companySearch.toLowerCase().trim()
+      console.log('Company search term:', searchTerm)
+      
+      filtered = filtered.filter(c => {
+        const concessionName = c.name.toLowerCase()
+        const isMatch = concessionName.includes(searchTerm)
+        
+        // Debug logging for first few matches
+        if (searchTerm.length > 2) {
+          console.log(`Checking "${c.name}" against "${searchTerm}": ${isMatch}`)
+        }
+        
+        return isMatch
+      })
+      
+      console.log(`Company search "${searchTerm}" found ${filtered.length} matches`)
     }
     if (advancedFilters.districtSearch) {
+      const searchTerm = advancedFilters.districtSearch.toLowerCase()
       filtered = filtered.filter(c => 
-        c.district.toLowerCase().includes(advancedFilters.districtSearch.toLowerCase())
+        c.district.toLowerCase().includes(searchTerm)
       )
     }
     if (advancedFilters.permitDateFrom) {
       filtered = filtered.filter(c => {
-        const permitDate = new Date(c.permitExpiryDate)
+        const permitDate = new Date(c.permitExpiryDate) // Using expiry date as that's what's available
         const fromDate = new Date(advancedFilters.permitDateFrom)
         return permitDate >= fromDate
       })
     }
     if (advancedFilters.permitDateTo) {
       filtered = filtered.filter(c => {
-        const permitDate = new Date(c.permitExpiryDate)
+        const permitDate = new Date(c.permitExpiryDate) // Using expiry date as that's what's available
         const toDate = new Date(advancedFilters.permitDateTo)
         return permitDate <= toDate
       })
@@ -129,7 +171,7 @@ export default function FiltersPage() {
     setAdvancedFilters({
       sizeMin: '',
       sizeMax: '',
-      ownerSearch: '',
+      companySearch: '',
       districtSearch: '',
       permitDateFrom: '',
       permitDateTo: ''
@@ -137,9 +179,30 @@ export default function FiltersPage() {
   }
 
   const handleApplyFilters = () => {
-    // Here you would apply the filters to your data
-    console.log('Applying filters:', { filters, advancedFilters })
-    alert('Filters applied successfully!')
+    // Filters are already applied automatically via useEffect
+    // This is just for user feedback
+    const activeFiltersCount = [
+      filters.region,
+      filters.status,
+      filters.type,
+      filters.expiryWindow,
+      advancedFilters.sizeMin,
+      advancedFilters.sizeMax,
+      advancedFilters.companySearch,
+      advancedFilters.districtSearch,
+      advancedFilters.permitDateFrom,
+      advancedFilters.permitDateTo
+    ].filter(f => f && f !== '').length
+    
+    console.log('Filters applied:', { filters, advancedFilters })
+    console.log(`Found ${filteredConcessions.length} matching concessions with ${activeFiltersCount} active filters`)
+    
+    // Optional: Show success message with result count
+    if (activeFiltersCount > 0) {
+      alert(`Filters applied! Found ${filteredConcessions.length} matching concessions.`)
+    } else {
+      alert('No filters are currently active. Showing all concessions.')
+    }
   }
 
   const handleSaveFilterSet = () => {
@@ -155,10 +218,65 @@ export default function FiltersPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Advanced Filters</h1>
+          <h1 className="text-2xl font-bold text-epa-orange-900">Advanced Filters</h1>
           <p className="text-gray-600">Configure detailed filters for mining concession data</p>
         </div>
       </div>
+
+      {/* Filter Results Summary */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <div className="h-2 w-2 bg-blue-500 rounded-full"></div>
+            <span className="text-sm font-medium text-blue-900">
+              Showing {filteredConcessions.length} of {concessions.length} concessions
+            </span>
+          </div>
+          <div className="text-xs text-blue-700">
+            {[
+              filters.region && `Region: ${filters.region}`,
+              filters.status && `Status: ${filters.status}`,
+              filters.type && `Type: ${filters.type.replace('-', ' ')}`,
+              filters.expiryWindow && `Expiring in ${filters.expiryWindow} days`,
+              advancedFilters.sizeMin && `Min size: ${advancedFilters.sizeMin}ha`,
+              advancedFilters.sizeMax && `Max size: ${advancedFilters.sizeMax}ha`,
+              advancedFilters.companySearch && `Concession: "${advancedFilters.companySearch}"`,
+              advancedFilters.districtSearch && `District: "${advancedFilters.districtSearch}"`,
+              (advancedFilters.permitDateFrom || advancedFilters.permitDateTo) && 'Date range applied'
+            ].filter(Boolean).join(' • ') || 'No filters applied'}
+          </div>
+        </div>
+      </div>
+
+      {/* Debug Panel for Company Search (development only) */}
+      {process.env.NODE_ENV === 'development' && concessions.length > 0 && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <h3 className="text-sm font-medium text-yellow-800 mb-2">🛠️ Debug: Concession Name Search Data</h3>
+          <div className="text-xs text-yellow-700">
+            <div className="mb-2">
+              <strong>Total concessions:</strong> {concessions.length}
+            </div>
+            <div className="mb-2">
+              <strong>Unique concession names ({[...new Set(concessions.map(c => c.name))].length}):</strong>
+              <div className="max-h-20 overflow-y-auto bg-white p-2 rounded mt-1">
+                {[...new Set(concessions.map(c => c.name))].map((name, idx) => (
+                  <div key={idx} className="py-1 border-b border-gray-100 last:border-b-0">
+                    "{name}"
+                  </div>
+                ))}
+              </div>
+            </div>
+            {advancedFilters.companySearch && (
+              <div className="mb-2">
+                <strong>Current search:</strong> "{advancedFilters.companySearch}"<br/>
+                <strong>Matches:</strong> {filteredConcessions.filter(c => 
+                  c.name.toLowerCase().includes(advancedFilters.companySearch.toLowerCase())
+                ).length}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Basic Filters */}
@@ -188,6 +306,7 @@ export default function FiltersPage() {
                       value={advancedFilters.sizeMin}
                       onChange={(e) => setAdvancedFilters(prev => ({ ...prev, sizeMin: e.target.value }))}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-epa-orange-500 focus:border-epa-orange-500"
+                      min="0"
                     />
                   </div>
                   <div>
@@ -198,26 +317,47 @@ export default function FiltersPage() {
                       value={advancedFilters.sizeMax}
                       onChange={(e) => setAdvancedFilters(prev => ({ ...prev, sizeMax: e.target.value }))}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-epa-orange-500 focus:border-epa-orange-500"
+                      min="0"
                     />
                   </div>
                 </div>
+                {/* Validation feedback for size range */}
+                {advancedFilters.sizeMin && advancedFilters.sizeMax && 
+                 parseFloat(advancedFilters.sizeMin) > parseFloat(advancedFilters.sizeMax) && (
+                  <div className="text-red-600 text-sm mt-1">
+                    ⚠️ Minimum size cannot be greater than maximum size
+                  </div>
+                )}
               </div>
 
-              {/* Owner Search */}
+              {/* Company Search */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Owner/Company Search
+                  Concession Name Search
                 </label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <input
                     type="text"
-                    placeholder="Search by owner or company name..."
-                    value={advancedFilters.ownerSearch}
-                    onChange={(e) => setAdvancedFilters(prev => ({ ...prev, ownerSearch: e.target.value }))}
+                    placeholder="Search by concession name..."
+                    value={advancedFilters.companySearch}
+                    onChange={(e) => setAdvancedFilters(prev => ({ ...prev, companySearch: e.target.value }))}
                     className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-epa-orange-500 focus:border-epa-orange-500"
                   />
                 </div>
+                {/* Show available concession names hint */}
+                {concessions.length > 0 && (
+                  <div className="text-xs text-gray-500 mt-1">
+                    Available concessions: {[...new Set(concessions.map(c => c.name))].slice(0, 3).join(', ')}
+                    {[...new Set(concessions.map(c => c.name))].length > 3 && ` and ${[...new Set(concessions.map(c => c.name))].length - 3} more...`}
+                  </div>
+                )}
+                {/* Show search results count */}
+                {advancedFilters.companySearch && (
+                  <div className="text-xs text-blue-600 mt-1">
+                    {filteredConcessions.filter(c => c.name.toLowerCase().includes(advancedFilters.companySearch.toLowerCase())).length} matches found
+                  </div>
+                )}
               </div>
 
               {/* District Search */}
@@ -240,7 +380,7 @@ export default function FiltersPage() {
               {/* Permit Date Range */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Permit Issue Date Range
+                  Permit Expiry Date Range
                 </label>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -262,6 +402,13 @@ export default function FiltersPage() {
                     />
                   </div>
                 </div>
+                {/* Validation feedback for date range */}
+                {advancedFilters.permitDateFrom && advancedFilters.permitDateTo && 
+                 new Date(advancedFilters.permitDateFrom) > new Date(advancedFilters.permitDateTo) && (
+                  <div className="text-red-600 text-sm mt-1">
+                    ⚠️ Start date cannot be later than end date
+                  </div>
+                )}
               </div>
 
               {/* Action Buttons */}
@@ -328,7 +475,7 @@ export default function FiltersPage() {
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
-              <span className="ml-3 text-gray-600">Loading real mining concessions data from EPA ArcGIS...</span>
+              <span className="ml-3 text-gray-600">Loading data...</span>
             </div>
           ) : filteredConcessions.length > 0 ? (
             <ConcessionTable concessions={filteredConcessions} />
@@ -361,7 +508,12 @@ export default function FiltersPage() {
             {/* Active concessions preset */}
             <div className="border border-gray-200 rounded-lg p-4 hover:border-green-500 cursor-pointer transition-colors"
                  onClick={() => {
-                   setFilters({ ...filters, status: 'active' })
+                   // Clear all filters first, then apply preset
+                   setFilters({ region: '', status: 'active', type: '', expiryWindow: '' })
+                   setAdvancedFilters({
+                     sizeMin: '', sizeMax: '', companySearch: '', districtSearch: '', 
+                     permitDateFrom: '', permitDateTo: ''
+                   })
                  }}>
               <h3 className="font-medium text-gray-900">Active Concessions</h3>
               <p className="text-sm text-gray-600 mt-1">All currently active mining permits</p>
@@ -373,7 +525,12 @@ export default function FiltersPage() {
             {/* Expiring soon preset */}
             <div className="border border-gray-200 rounded-lg p-4 hover:border-yellow-500 cursor-pointer transition-colors"
                  onClick={() => {
-                   setFilters({ ...filters, status: 'active', expiryWindow: '90' })
+                   // Clear all filters first, then apply preset
+                   setFilters({ region: '', status: 'active', type: '', expiryWindow: '90' })
+                   setAdvancedFilters({
+                     sizeMin: '', sizeMax: '', companySearch: '', districtSearch: '', 
+                     permitDateFrom: '', permitDateTo: ''
+                   })
                  }}>
               <h3 className="font-medium text-gray-900">Expiring in 90 Days</h3>
               <p className="text-sm text-gray-600 mt-1">Active permits expiring soon</p>
@@ -391,7 +548,12 @@ export default function FiltersPage() {
             {/* Large scale mines preset */}
             <div className="border border-gray-200 rounded-lg p-4 hover:border-blue-500 cursor-pointer transition-colors"
                  onClick={() => {
-                   setAdvancedFilters({ ...advancedFilters, sizeMin: '100' })
+                   // Clear all filters first, then apply preset
+                   setFilters({ region: '', status: '', type: '', expiryWindow: '' })
+                   setAdvancedFilters({
+                     sizeMin: '100', sizeMax: '', companySearch: '', districtSearch: '', 
+                     permitDateFrom: '', permitDateTo: ''
+                   })
                  }}>
               <h3 className="font-medium text-gray-900">Large Scale Operations</h3>
               <p className="text-sm text-gray-600 mt-1">Concessions over 100 hectares</p>
@@ -403,7 +565,12 @@ export default function FiltersPage() {
             {/* Expired concessions preset */}
             <div className="border border-gray-200 rounded-lg p-4 hover:border-red-500 cursor-pointer transition-colors"
                  onClick={() => {
-                   setFilters({ ...filters, status: 'expired' })
+                   // Clear all filters first, then apply preset
+                   setFilters({ region: '', status: 'expired', type: '', expiryWindow: '' })
+                   setAdvancedFilters({
+                     sizeMin: '', sizeMax: '', companySearch: '', districtSearch: '', 
+                     permitDateFrom: '', permitDateTo: ''
+                   })
                  }}>
               <h3 className="font-medium text-gray-900">Expired Permits</h3>
               <p className="text-sm text-gray-600 mt-1">Concessions with expired permits</p>
@@ -415,7 +582,12 @@ export default function FiltersPage() {
             {/* Western Region preset */}
             <div className="border border-gray-200 rounded-lg p-4 hover:border-purple-500 cursor-pointer transition-colors"
                  onClick={() => {
-                   setFilters({ ...filters, region: 'Western' })
+                   // Clear all filters first, then apply preset
+                   setFilters({ region: 'Western', status: '', type: '', expiryWindow: '' })
+                   setAdvancedFilters({
+                     sizeMin: '', sizeMax: '', companySearch: '', districtSearch: '', 
+                     permitDateFrom: '', permitDateTo: ''
+                   })
                  }}>
               <h3 className="font-medium text-gray-900">Western Region</h3>
               <p className="text-sm text-gray-600 mt-1">All concessions in Western Region</p>
@@ -427,7 +599,12 @@ export default function FiltersPage() {
             {/* Small scale operations preset */}
             <div className="border border-gray-200 rounded-lg p-4 hover:border-indigo-500 cursor-pointer transition-colors"
                  onClick={() => {
-                   setAdvancedFilters({ ...advancedFilters, sizeMax: '25' })
+                   // Clear all filters first, then apply preset
+                   setFilters({ region: '', status: '', type: '', expiryWindow: '' })
+                   setAdvancedFilters({
+                     sizeMin: '', sizeMax: '25', companySearch: '', districtSearch: '', 
+                     permitDateFrom: '', permitDateTo: ''
+                   })
                  }}>
               <h3 className="font-medium text-gray-900">Small Scale Operations</h3>
               <p className="text-sm text-gray-600 mt-1">Concessions under 25 hectares</p>
@@ -438,6 +615,47 @@ export default function FiltersPage() {
           </div>
         </div>
       </div>
+
+      {/* Filtered Results Preview */}
+      {filteredConcessions.length > 0 && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="p-4 border-b border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-900">Filtered Results</h2>
+            <p className="text-sm text-gray-600">Preview of filtered mining concessions</p>
+          </div>
+          <div className="p-6">
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              {filteredConcessions.slice(0, 10).map((concession, index) => (
+                <div key={concession.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2">
+                      <h4 className="font-medium text-gray-900">{concession.name}</h4>
+                      <span className={`px-2 py-1 text-xs rounded-full ${
+                        concession.status === 'active' ? 'bg-green-100 text-green-800' :
+                        concession.status === 'expired' ? 'bg-red-100 text-red-800' :
+                        'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {concession.status}
+                      </span>
+                    </div>
+                    <div className="text-sm text-gray-600 mt-1">
+                      {concession.owner} • {concession.district}, {concession.region} • {concession.size} ha
+                    </div>
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    Expires: {new Date(concession.permitExpiryDate).toLocaleDateString()}
+                  </div>
+                </div>
+              ))}
+              {filteredConcessions.length > 10 && (
+                <div className="text-center py-4 text-gray-500">
+                  ... and {filteredConcessions.length - 10} more concessions
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

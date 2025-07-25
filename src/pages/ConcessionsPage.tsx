@@ -103,7 +103,7 @@ export default function ConcessionsPage() {
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-epa-orange-500 mx-auto mb-4"></div>
               <p className="text-gray-600">Loading real mining concessions data...</p>
-              <p className="text-sm text-gray-500 mt-2">Fetching from EPA ArcGIS database</p>
+              <p className="text-sm text-gray-500 mt-2">Fetching real-time data</p>
             </div>
           </div>
         </div>
@@ -116,13 +116,13 @@ export default function ConcessionsPage() {
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h1 className="text-2xl font-bold text-gray-900">Mining Concessions Database</h1>
+          <h1 className="text-2xl font-bold text-epa-orange-900">Mining Concessions Database</h1>
           <p className="text-gray-600 mt-2">
             Comprehensive management of mining permits and concessions in Ghana - Real EPA Data
           </p>
           <div className="mt-4 p-3 bg-green-50 rounded border border-green-200">
             <div className="text-sm text-green-800">
-              ✅ Real-time data from EPA ArcGIS Database • {concessions.length} concessions loaded • Last updated: {new Date().toLocaleString()}
+              ✅ Real-time data • {concessions.length} concessions loaded • Last updated: {new Date().toLocaleString()}
             </div>
           </div>
         </div>

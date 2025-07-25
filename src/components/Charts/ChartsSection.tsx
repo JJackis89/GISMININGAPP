@@ -5,7 +5,7 @@ interface ChartsSectionProps {
   stats: DashboardStats
 }
 
-const COLORS = ['#f97316', '#22c55e', '#3b82f6', '#ef4444', '#8b5cf6', '#06b6d4', '#84cc16', '#f59e0b']
+const COLORS = ['#f97316', '#22c55e', '#3b82f6', '#ea580c', '#16a34a', '#2563eb', '#84cc16', '#f59e0b']
 
 export default function ChartsSection({ stats }: ChartsSectionProps) {
   const regionData = Object.entries(stats.concessionsByRegion).map(([region, count]) => ({

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { MiningConcession } from '../../types'
+import { MiningConcession, User } from '../../types'
 import { 
   ChevronUp, 
   ChevronDown, 
@@ -9,6 +9,8 @@ import {
   Users,
   AlertTriangle
 } from 'lucide-react'
+import { PrintButton } from '../Print'
+import { useAuth } from '../../contexts/AuthContext'
 
 interface ConcessionTableProps {
   concessions: MiningConcession[]
@@ -18,6 +20,7 @@ export default function ConcessionTable({ concessions }: ConcessionTableProps) {
   const [sortField, setSortField] = useState<keyof MiningConcession>('name')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
   const [selectedConcession, setSelectedConcession] = useState<MiningConcession | null>(null)
+  const { user } = useAuth()
 
   const handleSort = (field: keyof MiningConcession) => {
     if (field === sortField) {
@@ -40,15 +43,15 @@ export default function ConcessionTable({ concessions }: ConcessionTableProps) {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return 'bg-green-100 text-green-800'
+      case 'active': return 'bg-epa-green-100 text-epa-green-800'
       case 'expired': return 'bg-red-100 text-red-800'
-      case 'pending': return 'bg-yellow-100 text-yellow-800'
+      case 'pending': return 'bg-epa-orange-100 text-epa-orange-800'
       default: return 'bg-gray-100 text-gray-800'
     }
   }
 
   const getTypeColor = (type: string) => {
-    return type === 'large-scale' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'
+    return type === 'large-scale' ? 'bg-epa-blue-100 text-epa-blue-800' : 'bg-purple-100 text-purple-800'
   }
 
   const isExpiringSoon = (expiryDate: string) => {
@@ -72,6 +75,25 @@ export default function ConcessionTable({ concessions }: ConcessionTableProps) {
 
   return (
     <>
+      {/* Table Header with Batch Actions */}
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex items-center">
+          <h3 className="text-lg font-medium text-gray-900">
+            Mining Concessions ({concessions.length})
+          </h3>
+        </div>
+        <div className="flex items-center space-x-2">
+          {concessions.length > 0 && (
+            <PrintButton 
+              concessions={concessions} 
+              variant="batch" 
+              size="md"
+              user={user}
+            />
+          )}
+        </div>
+      </div>
+
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -138,7 +160,7 @@ export default function ConcessionTable({ concessions }: ConcessionTableProps) {
                       {new Date(concession.permitExpiryDate).toLocaleDateString()}
                     </div>
                     {isExpiringSoon(concession.permitExpiryDate) && concession.status === 'active' && (
-                      <AlertTriangle className="h-4 w-4 text-yellow-500 ml-2" />
+                      <AlertTriangle className="h-4 w-4 text-epa-orange-500 ml-2" />
                     )}
                   </div>
                 </td>
@@ -151,13 +173,22 @@ export default function ConcessionTable({ concessions }: ConcessionTableProps) {
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button
-                    onClick={() => setSelectedConcession(concession)}
-                    className="text-primary-600 hover:text-primary-900 flex items-center"
-                  >
-                    <Eye className="h-4 w-4 mr-1" />
-                    View
-                  </button>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => setSelectedConcession(concession)}
+                      className="text-epa-orange-600 hover:text-epa-orange-900 flex items-center"
+                    >
+                      <Eye className="h-4 w-4 mr-1" />
+                      View
+                    </button>
+                    <PrintButton 
+                      concession={concession} 
+                      variant="single" 
+                      size="sm" 
+                      className="ml-2"
+                      user={user}
+                    />
+                  </div>
                 </td>
               </tr>
             ))}
@@ -172,12 +203,20 @@ export default function ConcessionTable({ concessions }: ConcessionTableProps) {
             <div className="p-6">
               <div className="flex justify-between items-start mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">{selectedConcession.name}</h3>
-                <button
-                  onClick={() => setSelectedConcession(null)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  ✕
-                </button>
+                <div className="flex items-center space-x-2">
+                  <PrintButton 
+                    concession={selectedConcession} 
+                    variant="single" 
+                    size="sm"
+                    user={user}
+                  />
+                  <button
+                    onClick={() => setSelectedConcession(null)}
+                    className="text-gray-400 hover:text-epa-orange-600 transition-colors"
+                  >
+                    ✕
+                  </button>
+                </div>
               </div>
               
               <div className="grid grid-cols-2 gap-4 text-sm">

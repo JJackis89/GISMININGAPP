@@ -27,7 +27,7 @@ export default function AnalyticsPage() {
         await miningDataService.initialize()
         const realStats = await miningDataService.getDashboardStats()
         
-        console.log('✅ Loaded real analytics data from EPA ArcGIS:', realStats)
+        console.log('✅ Loaded real analytics data:', realStats)
         setStats(realStats)
       } catch (err) {
         console.error('❌ Error loading analytics data:', err)
@@ -54,7 +54,7 @@ export default function AnalyticsPage() {
       <div className="flex items-center justify-center min-h-96">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-epa-orange-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading real mining concessions analytics from EPA ArcGIS...</p>
+          <p className="text-gray-600">Loading real-time analytics data...</p>
         </div>
       </div>
     )
@@ -64,7 +64,7 @@ export default function AnalyticsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Analytics & Insights</h1>
+          <h1 className="text-2xl font-bold text-epa-orange-900">Analytics & Insights</h1>
           <p className="text-gray-600">Comprehensive analysis of mining concession data</p>
         </div>
       </div>

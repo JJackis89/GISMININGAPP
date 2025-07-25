@@ -2,7 +2,7 @@
 
 # EPA Mining Concessions Management System - Copilot Instructions
 
-This is a professional GIS web dashboard application for managing mining concession data for the Environmental Protection Agency (EPA) of Ghana. The project uses modern web technologies with specific architectural patterns and conventions.
+This is a professional GIS web dashboard application for managing mining concession data for the Environmental Protection Authority (EPA) of Ghana. The project uses modern web technologies with specific architectural patterns and conventions.
 
 ## Project Overview
 - **Framework**: React 18 with TypeScript

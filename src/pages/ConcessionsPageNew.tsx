@@ -103,7 +103,7 @@ export default function ConcessionsPage() {
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-epa-orange-500 mx-auto mb-4"></div>
               <p className="text-gray-600">Loading real mining concessions data...</p>
-              <p className="text-sm text-gray-500 mt-2">Fetching from EPA ArcGIS database</p>
+              <p className="text-sm text-gray-500 mt-2">Fetching real-time data</p>
             </div>
           </div>
         </div>
@@ -122,7 +122,7 @@ export default function ConcessionsPage() {
           </p>
           <div className="mt-4 p-3 bg-green-50 rounded border border-green-200">
             <div className="text-sm text-green-800">
-              ✅ Real-time data from EPA ArcGIS Database • {concessions.length} concessions loaded • Last updated: {new Date().toLocaleString()}
+              ✅ Real-time data • {concessions.length} concessions loaded • Last updated: {new Date().toLocaleString()}
             </div>
           </div>
         </div>

@@ -591,7 +591,7 @@ const MapViewer: React.FC<MapViewerProps> = ({
                         </head>
                         <body>
                           <h1>Ghana Mining Concessions Map</h1>
-                          <p>Environmental Protection Agency - ${new Date().toLocaleDateString()}</p>
+                          <p>Environmental Protection Authority - ${new Date().toLocaleDateString()}</p>
                           <img src="${screenshot.dataUrl}" alt="Mining Concessions Map">
                           <script>window.onload = () => window.print();</script>
                         </body>

@@ -1,5 +1,6 @@
 import { MiningConcession, DashboardStats } from '../types'
 import { arcgisConfig } from '../config/arcgisConfig'
+import { processConcessionBoundary } from '../utils/geometryUtils'
 
 declare global {
   interface Window {
@@ -209,12 +210,61 @@ export class ArcGISService {
         ]
       }
 
+      // Debug: Log available fields and attributes
+      console.log('=== Processing feature attributes ===')
+      console.log('Available fields:', Object.keys(attributes))
+      console.log('Raw attributes sample:', attributes)
+      console.log('Geometry info:', {
+        type: feature.geometry?.type,
+        hasRings: feature.geometry?.rings?.length > 0,
+        ringsCount: feature.geometry?.rings?.length,
+        firstRingPoints: feature.geometry?.rings?.[0]?.length
+      })
+      console.log('Size field search results:', {
+        searchFields: arcgisConfig.fieldMappings.size,
+        foundValue: this.getFieldValue(attributes, arcgisConfig.fieldMappings.size),
+        parsedValue: parseFloat(this.getFieldValue(attributes, arcgisConfig.fieldMappings.size))
+      })
+
+      // Calculate area - try field first, then calculate from geometry
+      let calculatedSize = parseFloat(this.getFieldValue(attributes, arcgisConfig.fieldMappings.size))
+      
+      if (!calculatedSize || isNaN(calculatedSize)) {
+        console.log('No area field found, calculating from geometry...')
+        try {
+          // Create a temporary concession object to calculate geometry-based area
+          const tempConcession: Partial<MiningConcession> = {
+            coordinates: coordinates
+          }
+          const boundaryGeometry = processConcessionBoundary(tempConcession as MiningConcession)
+          calculatedSize = boundaryGeometry.area
+          console.log(`Calculated area from geometry: ${calculatedSize} hectares`)
+        } catch (geometryError) {
+          console.warn('Failed to calculate area from geometry:', geometryError)
+          calculatedSize = Math.round(Math.random() * 300 + 50) // Fallback
+        }
+      } else {
+        console.log(`Found area in field: ${calculatedSize}`)
+      }
+
       // Map attribute fields to our data structure using config
+      const ownerValue = this.getFieldValue(attributes, arcgisConfig.fieldMappings.owner) || 'Unknown Owner'
+      
+      // Enhanced debugging for owner field
+      console.log(`Feature ${index + 1} owner mapping:`, {
+        rawAttributes: Object.keys(attributes),
+        ownerFields: arcgisConfig.fieldMappings.owner,
+        foundOwnerValue: ownerValue,
+        sampleAttributes: Object.fromEntries(
+          Object.entries(attributes).slice(0, 5)
+        )
+      })
+
       const concession: MiningConcession = {
         id: this.getFieldValue(attributes, arcgisConfig.fieldMappings.id) || `MC${String(index + 1).padStart(3, '0')}`,
         name: this.getFieldValue(attributes, arcgisConfig.fieldMappings.name) || `Mining Concession ${index + 1}`,
-        size: parseFloat(this.getFieldValue(attributes, arcgisConfig.fieldMappings.size)) || Math.round(Math.random() * 300 + 50),
-        owner: this.getFieldValue(attributes, arcgisConfig.fieldMappings.owner) || 'Unknown Owner',
+        size: calculatedSize,
+        owner: ownerValue,
         permitType: this.normalizePermitType(this.getFieldValue(attributes, arcgisConfig.fieldMappings.permitType) || 'large-scale'),
         permitExpiryDate: this.formatDate(this.getFieldValue(attributes, arcgisConfig.fieldMappings.expiryDate)) || '2025-12-31',
         district: this.getFieldValue(attributes, arcgisConfig.fieldMappings.district) || 'Unknown District',

@@ -1,8 +1,8 @@
 # EPA Mining Concessions Management System
 
-A professional web-based GIS dashboard application for managing and visualizing mining concession data in Ghana. Developed for the Environmental Protection Authority (EPA) of Ghana with integrated ArcGIS Online mapping capabilities and Supabase authentication.
+A professional web-based GIS dashboard application for managing and visualizing mining concession data in Ghana. Developed for the Environmental Protection Authority (EPA) of Ghana with integrated ArcGIS Online mapping capabilities and Firebase authentication.
 
-🔧 **Status**: Live with Supabase authentication configured
+🔧 **Status**: Live with Firebase authentication configured (with local demo fallback)
 
 ## About EPA Ghana
 
@@ -10,10 +10,10 @@ The Environmental Protection Authority (EPA) of Ghana is responsible for the pro
 
 ## 🌐 Live Demo
 
-**Vercel (Production)**: Coming soon - deploying with Supabase authentication  
+**Vercel (Production)**: Coming soon - deploying with Firebase authentication  
 **GitHub Pages**: [https://JJackis89.github.io/GISMININGAPP/](https://JJackis89.github.io/GISMININGAPP/)
 
-## � Quick Start
+## 🚀 Quick Start
 
 ### Easy Launch (Windows)
 Double-click `start-epa-dashboard.bat` to automatically start the development server.
@@ -22,16 +22,18 @@ Double-click `start-epa-dashboard.bat` to automatically start the development se
 1. Install [Node.js](https://nodejs.org/) (version 18+)
 2. Clone this repository
 3. Run `npm install`
-4. Configure your `.env` file with Supabase credentials
-5. Run `npm run dev`
+4. Configure Firebase (see `FIREBASE_SETUP.md` for detailed instructions)
+5. Set up your `.env.local` file with Firebase credentials (see `.env.local.example`)
+6. Run `npm run dev`
 
 ## Features
 
-### 🔐 User Authentication (Supabase)
-- Email-based registration and login
-- Secure session management
-- Role-based access control
-- Password reset functionality
+### 🔐 User Authentication (Firebase)
+- Email/Password authentication with Firebase
+- Secure session management with persistent login
+- Role-based access control (Admin, Staff, Guest)
+- User registration and password reset
+- Local demo mode fallback when Firebase is not configured
 
 ### 🗺️ Interactive Map Viewer
 - ArcGIS Online integration with Ghana-focused extent
@@ -195,6 +197,29 @@ src/
 ```
 
 ## Configuration
+
+### Firebase Authentication Setup
+
+For detailed Firebase setup instructions, see `FIREBASE_SETUP.md`.
+
+**Quick Setup:**
+1. Create a Firebase project at [Firebase Console](https://console.firebase.google.com/)
+2. Enable Email/Password authentication
+3. Copy your Firebase config and create `.env.local`:
+
+```env
+VITE_FIREBASE_API_KEY=your_api_key_here
+VITE_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_project_id.appspot.com
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+VITE_FIREBASE_APP_ID=your_app_id
+```
+
+**Demo Mode:** If Firebase is not configured, the app automatically uses local demo mode with test accounts:
+- Admin: `admin@epa.gov.gh` / `admin123`
+- Staff: `staff@epa.gov.gh` / `staff123`
+- Guest: `guest@example.com` / `guest123`
 
 ### ArcGIS Integration
 

@@ -1,4 +1,5 @@
 import { MiningConcession, DashboardStats } from '../types'
+import { generateRealisticBoundary } from '../utils/geometryUtils'
 
 export const mockConcessions: MiningConcession[] = [
   {
@@ -11,7 +12,21 @@ export const mockConcessions: MiningConcession[] = [
     district: 'Tarkwa',
     region: 'Western',
     status: 'active',
-    coordinates: [[-1.9973, 5.2967], [-1.9873, 5.2967], [-1.9873, 5.3067], [-1.9973, 5.3067]],
+    // Realistic concession boundary around Tarkwa area with 12 vertices
+    coordinates: [
+      [-1.9973, 5.2967], // Vertex 1
+      [-1.9823, 5.2987], // Vertex 2
+      [-1.9743, 5.2947], // Vertex 3
+      [-1.9693, 5.2867], // Vertex 4
+      [-1.9723, 5.2787], // Vertex 5
+      [-1.9793, 5.2747], // Vertex 6
+      [-1.9873, 5.2767], // Vertex 7
+      [-1.9943, 5.2807], // Vertex 8
+      [-1.9993, 5.2867], // Vertex 9
+      [-1.9983, 5.2927], // Vertex 10
+      [-1.9963, 5.2967], // Vertex 11
+      [-1.9973, 5.2967]  // Close polygon
+    ],
     contactInfo: {
       phone: '+233-24-123-4567',
       email: 'info@ghanagold.com',
@@ -28,7 +43,19 @@ export const mockConcessions: MiningConcession[] = [
     district: 'Kumasi',
     region: 'Ashanti',
     status: 'active',
-    coordinates: [[-1.6247, 6.6885], [-1.6147, 6.6885], [-1.6147, 6.6985], [-1.6247, 6.6985]]
+    // Realistic concession boundary around Kumasi area with 10 vertices
+    coordinates: [
+      [-1.6247, 6.6885], // Vertex 1
+      [-1.6147, 6.6905], // Vertex 2
+      [-1.6067, 6.6865], // Vertex 3
+      [-1.6017, 6.6805], // Vertex 4
+      [-1.6047, 6.6745], // Vertex 5
+      [-1.6127, 6.6725], // Vertex 6
+      [-1.6207, 6.6755], // Vertex 7
+      [-1.6267, 6.6815], // Vertex 8
+      [-1.6257, 6.6875], // Vertex 9
+      [-1.6247, 6.6885]  // Close polygon
+    ]
   },
   {
     id: 'MC003',
@@ -40,7 +67,17 @@ export const mockConcessions: MiningConcession[] = [
     district: 'Tamale',
     region: 'Northern',
     status: 'expired',
-    coordinates: [[-0.8395, 9.4034], [-0.8295, 9.4034], [-0.8295, 9.4134], [-0.8395, 9.4134]]
+    // Realistic boundary around Tamale area with 8 vertices
+    coordinates: [
+      [-0.8395, 9.4034], // Vertex 1
+      [-0.8295, 9.4054], // Vertex 2
+      [-0.8245, 9.4014], // Vertex 3
+      [-0.8215, 9.3954], // Vertex 4
+      [-0.8255, 9.3914], // Vertex 5
+      [-0.8325, 9.3934], // Vertex 6
+      [-0.8375, 9.3994], // Vertex 7
+      [-0.8395, 9.4034]  // Close polygon
+    ]
   },
   {
     id: 'MC004',

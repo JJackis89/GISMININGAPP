@@ -40,9 +40,9 @@ export default function Dashboard() {
         setError(null)
         console.log('Loading concessions data...')
         
-        // For immediate testing, let's use sample data first
-        // Change this to true when your ArcGIS is configured properly
-        const useArcGIS = false
+        // Use ArcGIS Feature Layer data to match the map
+        // This ensures consistency between dashboard and map data
+        const useArcGIS = true
         
         if (useArcGIS) {
           // Add timeout to prevent infinite loading

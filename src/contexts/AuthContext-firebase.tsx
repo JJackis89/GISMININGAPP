@@ -90,22 +90,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           // User state will be updated by the auth state listener
           return { success: true }
         } else {
-          // Enhanced error messages for common Firebase errors
-          let errorMessage = result.error || 'Login failed'
-          
-          if (errorMessage.includes('user-not-found')) {
-            errorMessage = 'No account found with this email address'
-          } else if (errorMessage.includes('wrong-password')) {
-            errorMessage = 'Incorrect password. Please try again'
-          } else if (errorMessage.includes('invalid-email')) {
-            errorMessage = 'Please enter a valid email address'
-          } else if (errorMessage.includes('too-many-requests')) {
-            errorMessage = 'Too many failed attempts. Please try again later'
-          } else if (errorMessage.includes('network-request-failed')) {
-            errorMessage = 'Network error. Please check your connection and try again'
-          }
-          
-          return { success: false, error: errorMessage }
+          return { success: false, error: result.error }
         }
         
       } else {
@@ -116,23 +101,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
           setUser(result.user)
           return { success: true }
         } else {
-          return { success: false, error: result.error || 'Invalid email or password' }
+          return { success: false, error: result.error }
         }
       }
       
     } catch (error: any) {
       console.error('Login error:', error)
-      let errorMessage = 'An unexpected error occurred. Please try again'
-      
-      if (error.message) {
-        if (error.message.includes('network')) {
-          errorMessage = 'Network error. Please check your connection and try again'
-        } else if (error.message.includes('timeout')) {
-          errorMessage = 'Request timed out. Please try again'
-        }
-      }
-      
-      return { success: false, error: errorMessage }
+      return { success: false, error: error.message || 'Login failed' }
     } finally {
       setLoading(false)
     }

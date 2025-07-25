@@ -53,8 +53,8 @@ export const arcgisConfig: ArcGISConfig = {
   
   // Add your feature service URLs here if you want to use them directly
   featureServiceUrls: {
-    // Example: 'https://services.arcgis.com/your-org/arcgis/rest/services/MiningConcessions/FeatureServer/0'
-    miningConcessions: undefined
+    // Use the direct feature service URL from the map layer
+    miningConcessions: 'https://services6.arcgis.com/Av3KhOzUMUMSORVt/arcgis/rest/services/Mining_Concessions/FeatureServer/0'
   },
   
   // Field mappings - add more variations based on your actual data schema

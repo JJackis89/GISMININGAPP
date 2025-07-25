@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
-import { Lock, Mail } from 'lucide-react'
+import { Lock, Mail, Zap, Home } from 'lucide-react'
 import SignUp from './SignUp'
 
 export default function Login() {
@@ -9,7 +9,7 @@ export default function Login() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [showSignUp, setShowSignUp] = useState(false)
-  const { login } = useAuth()
+  const { login, isUsingFirebase, isUsingLocal } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -18,7 +18,7 @@ export default function Login() {
 
     const result = await login(email, password)
     if (!result.success) {
-      setError(result.error || 'Login failed')
+      setError(result.error || 'Invalid email or password. Please check your credentials and try again.')
     }
     setLoading(false)
   }
@@ -71,6 +71,36 @@ export default function Login() {
             <p className="text-gray-600">Mining Concession Management System</p>
           </div>
 
+          {/* Authentication Status Indicator */}
+          {isUsingFirebase && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6 text-sm">
+              <div className="flex items-center gap-2 text-green-800">
+                <Zap className="h-4 w-4" />
+                <span className="font-medium">Firebase Authentication Active</span>
+              </div>
+              <p className="text-green-700 mt-1">
+                Using secure Firebase authentication for production environment.
+              </p>
+            </div>
+          )}
+
+          {isUsingLocal && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 text-sm">
+              <div className="flex items-center gap-2 text-blue-800 mb-2">
+                <Home className="h-4 w-4" />
+                <span className="font-medium">Local Demo Mode</span>
+              </div>
+              <p className="text-blue-700 mb-2">
+                Firebase not configured. Using local demo authentication.
+              </p>
+              <div className="text-blue-600 text-xs space-y-1">
+                <div><strong>Admin:</strong> admin@epa.gov.gh / adminpassword</div>
+                <div><strong>Staff:</strong> staff@epa.gov.gh / staffpassword</div>
+                <div><strong>Guest:</strong> guest@epa.gov.gh / guestpassword</div>
+              </div>
+            </div>
+          )}
+
           <div className="bg-white rounded-lg shadow-xl p-8">
             <form className="space-y-6" onSubmit={handleSubmit}>
               <div>
@@ -117,7 +147,17 @@ export default function Login() {
 
               {error && (
                 <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
-                  {error}
+                  <div className="flex">
+                    <div className="flex-shrink-0">
+                      <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="ml-3">
+                      <p className="font-medium">Login Failed</p>
+                      <p className="mt-1">{error}</p>
+                    </div>
+                  </div>
                 </div>
               )}
 

@@ -8,6 +8,8 @@ import ConcessionsPage from './pages/ConcessionsPage'
 import FiltersPage from './pages/FiltersPage'
 import AnalyticsPage from './pages/AnalyticsPage'
 import ReportsPage from './pages/ReportsPage'
+import PrintTestPage from './pages/PrintTestPage'
+import PrintVerification from './components/PrintVerification'
 
 function App() {
   const { user, loading } = useAuth()
@@ -29,7 +31,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-epa-orange-50 to-epa-green-50">
       <Navbar />
       <div className="flex">
         <Sidebar />
@@ -41,6 +43,8 @@ function App() {
             <Route path="/filters" element={<FiltersPage />} />
             <Route path="/analytics" element={<AnalyticsPage />} />
             <Route path="/reports" element={<ReportsPage />} />
+            <Route path="/print-test" element={<PrintTestPage />} />
+            <Route path="/print-verify" element={<PrintVerification />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
