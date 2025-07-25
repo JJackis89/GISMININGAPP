@@ -248,36 +248,6 @@ export default function FiltersPage() {
         </div>
       </div>
 
-      {/* Debug Panel for Company Search (development only) */}
-      {process.env.NODE_ENV === 'development' && concessions.length > 0 && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <h3 className="text-sm font-medium text-yellow-800 mb-2">🛠️ Debug: Concession Name Search Data</h3>
-          <div className="text-xs text-yellow-700">
-            <div className="mb-2">
-              <strong>Total concessions:</strong> {concessions.length}
-            </div>
-            <div className="mb-2">
-              <strong>Unique concession names ({[...new Set(concessions.map(c => c.name))].length}):</strong>
-              <div className="max-h-20 overflow-y-auto bg-white p-2 rounded mt-1">
-                {[...new Set(concessions.map(c => c.name))].map((name, idx) => (
-                  <div key={idx} className="py-1 border-b border-gray-100 last:border-b-0">
-                    "{name}"
-                  </div>
-                ))}
-              </div>
-            </div>
-            {advancedFilters.companySearch && (
-              <div className="mb-2">
-                <strong>Current search:</strong> "{advancedFilters.companySearch}"<br/>
-                <strong>Matches:</strong> {filteredConcessions.filter(c => 
-                  c.name.toLowerCase().includes(advancedFilters.companySearch.toLowerCase())
-                ).length}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Basic Filters */}
         <div className="lg:col-span-1">

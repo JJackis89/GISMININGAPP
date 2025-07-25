@@ -4,7 +4,6 @@ import Login from './components/Auth/Login'
 import Navbar from './components/Layout/Navbar'
 import Sidebar from './components/Layout/Sidebar'
 import MapViewPage from './pages/MapViewPage'
-import ConcessionsPage from './pages/ConcessionsPage'
 import FiltersPage from './pages/FiltersPage'
 import AnalyticsPage from './pages/AnalyticsPage'
 import ReportsPage from './pages/ReportsPage'
@@ -39,7 +38,6 @@ function App() {
           <Routes>
             <Route path="/" element={<MapViewPage />} />
             <Route path="/map-view" element={<MapViewPage />} />
-            <Route path="/concessions" element={<ConcessionsPage />} />
             <Route path="/filters" element={<FiltersPage />} />
             <Route path="/analytics" element={<AnalyticsPage />} />
             <Route path="/reports" element={<ReportsPage />} />

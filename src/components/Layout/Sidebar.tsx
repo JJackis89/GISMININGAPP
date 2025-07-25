@@ -2,22 +2,18 @@ import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { 
   Map, 
-  Table, 
   Filter, 
   BarChart3, 
   FileText, 
-  Settings,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react'
 
 const menuItems = [
   { icon: Map, label: 'Map View', path: '/map-view' },
-  { icon: Table, label: 'Concessions', path: '/concessions' },
   { icon: Filter, label: 'Filters', path: '/filters' },
   { icon: BarChart3, label: 'Analytics', path: '/analytics' },
   { icon: FileText, label: 'Reports', path: '/reports' },
-  { icon: Settings, label: 'Admin', path: '/admin' },
 ]
 
 export default function Sidebar() {

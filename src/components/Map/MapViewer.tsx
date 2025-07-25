@@ -25,11 +25,70 @@ const MapViewer: React.FC<MapViewerProps> = ({
   const searchWidgetRef = useRef<any>(null)
   const locateWidgetRef = useRef<any>(null)
   const miningLayerRef = useRef<any>(null)
+  const environmentalLayerRef = useRef<any>(null)
   const printWidgetRef = useRef<any>(null)
+
+  // Helper functions defined outside useEffect for reusability
+  const zoomToFeature = (feature: any, view: any) => {
+    console.log('🎯 Zooming to selected feature...')
+    
+    const require = (window as any).require
+    
+    require(['esri/Graphic'], (Graphic: any) => {
+      try {
+        // Create a highlight graphic
+        const highlightGraphic = new Graphic({
+          geometry: feature.geometry,
+          symbol: {
+            type: 'simple-fill',
+            color: [255, 255, 0, 0.6], // Yellow highlight with transparency
+            outline: {
+              color: [255, 255, 0, 1], // Yellow outline
+              width: 3
+            }
+          }
+        })
+
+        // Clear any existing highlights
+        view.graphics.removeAll()
+        
+        // Add highlight graphic
+        view.graphics.add(highlightGraphic)
+
+        // Zoom to feature with some padding
+        view.goTo({
+          target: feature.geometry.extent.expand(1.5),
+          duration: 1500
+        }).then(() => {
+          console.log('✅ Zoomed to feature successfully')
+          
+          // Show popup with feature information
+          view.popup.open({
+            features: [feature],
+            location: feature.geometry.centroid
+          })
+
+          // Remove highlight after 5 seconds
+          setTimeout(() => {
+            view.graphics.remove(highlightGraphic)
+          }, 5000)
+        }).catch((error: any) => {
+          console.error('❌ Error zooming to feature:', error)
+        })
+      } catch (error) {
+        console.error('❌ Error creating highlight:', error)
+      }
+    })
+  }
 
   useEffect(() => {
     // Prevent multiple initializations
-    if (initializationRef.current) return
+    if (initializationRef.current) {
+      console.log('🚫 Map already initialized, skipping...')
+      return
+    }
+    
+    console.log('🚀 Starting map initialization...')
     initializationRef.current = true
 
     let isMounted = true
@@ -123,6 +182,11 @@ const MapViewer: React.FC<MapViewerProps> = ({
                 setTimeout(() => {
                   addMiningConcessionsLayer(map, view)
                 }, 500)
+                
+                // Add environmental zones layer
+                setTimeout(() => {
+                  addEnvironmentalZonesLayer(map, view)
+                }, 700)
                 
                 // Configure popup and events after view is ready (non-blocking)
                 try {
@@ -274,7 +338,8 @@ const MapViewer: React.FC<MapViewerProps> = ({
         miningLayer.when(() => {
           console.log('🏭 Mining layer loaded successfully')
           console.log('📊 Layer extent:', miningLayer.fullExtent)
-          console.log('🏷️ Layer fields:', miningLayer.fields.map((f: any) => f.name))
+          console.log('🏷️ Layer fields:', miningLayer.fields?.map((f: any) => f.name) || 'No fields')
+          console.log('✅ Layer loaded state:', miningLayer.loaded)
           
           // Update search widget with mining layer as source
           if (searchWidgetRef.current) {
@@ -308,6 +373,123 @@ const MapViewer: React.FC<MapViewerProps> = ({
       })
     }
 
+    const addEnvironmentalZonesLayer = (map: any, _view: any) => {
+      const require = (window as any).require
+      
+      require(['esri/layers/FeatureLayer'], (FeatureLayer: any) => {
+        console.log('🗺️ Adding districts layer...')
+        
+        const districtsLayer = new FeatureLayer({
+          url: 'https://services6.arcgis.com/Av3KhOzUMUMSORVt/arcgis/rest/services/Districts/FeatureServer/0',
+          title: 'Districts',
+          outFields: ['*'], // Fetch all fields for popups
+          renderer: {
+            type: 'simple',
+            symbol: {
+              type: 'simple-fill',
+              color: [0, 0, 0, 0], // Transparent fill
+              outline: {
+                color: [0, 112, 255, 0.8], // Blue outline
+                width: 2
+              }
+            }
+          },
+          popupTemplate: {
+            title: 'District: {DIST_NAME}', // Adjust field name as needed
+            content: [
+              {
+                type: 'fields',
+                fieldInfos: [
+                  { 
+                    fieldName: 'DIST_NAME', 
+                    label: 'District Name',
+                    visible: true
+                  },
+                  { 
+                    fieldName: 'REGION', 
+                    label: 'Region',
+                    visible: true
+                  },
+                  { 
+                    fieldName: 'CAPITAL', 
+                    label: 'Capital',
+                    visible: true
+                  }
+                ]
+              }
+            ]
+          },
+          // Add labeling configuration for districts
+          labelingInfo: [
+            {
+              labelExpressionInfo: {
+                expression: '$feature.district' // Use district field for labeling
+              },
+              symbol: {
+                type: 'text',
+                color: [0, 112, 255, 1],
+                backgroundColor: [255, 255, 255, 0.8],
+                borderLineColor: [0, 112, 255, 1],
+                borderLineSize: 1,
+                font: {
+                  family: 'Arial',
+                  size: 10,
+                  weight: 'bold'
+                },
+                haloColor: 'white',
+                haloSize: 2
+              },
+              minScale: 800000, // Show labels at appropriate zoom level
+              maxScale: 0
+            }
+          ],
+          labelsVisible: true, // Ensure labels are visible by default
+          opacity: 0.7, // Make it semi-transparent so it doesn't interfere with mining concessions
+          visible: true
+        })
+
+        map.add(districtsLayer, 0) // Add as bottom layer
+        environmentalLayerRef.current = districtsLayer
+        console.log('✅ Districts layer added successfully')
+        
+        // Add layer load event handling
+        districtsLayer.when(() => {
+          console.log('🗺️ Districts layer loaded successfully')
+          console.log('📊 Districts layer extent:', districtsLayer.fullExtent)
+          console.log('🏷️ Districts layer fields:', districtsLayer.fields.map((f: any) => f.name))
+          
+          // Update search widget with districts layer as source
+          if (searchWidgetRef.current) {
+            console.log('🔍 Adding districts layer to search widget...')
+            const require = (window as any).require
+            
+            require(['esri/widgets/Search'], (_Search: any) => {
+              // Create new search source for districts layer
+              const districtsSearchSource = {
+                layer: districtsLayer,
+                searchFields: ["DIST_NAME", "REGION", "CAPITAL"],
+                displayField: "DIST_NAME",
+                exactMatch: false,
+                outFields: ["*"],
+                name: "Districts",
+                placeholder: "Search districts...",
+                maxResults: 6,
+                maxSuggestions: 6,
+                suggestionsEnabled: true,
+                minSuggestCharacters: 2
+              }
+              
+              // Add the districts layer source to existing sources
+              searchWidgetRef.current.sources.add(districtsSearchSource)
+              console.log('✅ Districts added to search widget')
+            })
+          }
+        }).catch((error: any) => {
+          console.error('❌ Error loading districts layer:', error)
+        })
+      })
+    }
+
     const configurePopopAndEvents = (view: any) => {
       // Simple configuration without complex popup event handling
       try {
@@ -332,46 +514,71 @@ const MapViewer: React.FC<MapViewerProps> = ({
     }
 
     const initializeMapWidgets = (view: any) => {
-      console.log('🔧 Setting up simplified map controls...')
+      console.log('🔧 Setting up map widgets...')
       
-      // Just add basic ArcGIS zoom widget as fallback
       const require = (window as any).require
       
-      require(['esri/widgets/Zoom'], (Zoom: any) => {
+      require(['esri/widgets/Zoom', 'esri/widgets/BasemapGallery', 'esri/widgets/Expand'], (Zoom: any, BasemapGallery: any, Expand: any) => {
         try {
+          // Add basic zoom widget (hidden)
           const zoomWidget = new Zoom({
             view: view
           })
           
-          // Add it but hide it since we have custom controls
           view.ui.add(zoomWidget, 'top-right')
           zoomWidget.domNode.style.display = 'none' // Hide the default zoom
           
-          console.log('✅ Basic zoom widget added (hidden)')
+          // Create basemap gallery
+          const basemapGallery = new BasemapGallery({
+            view: view,
+            container: document.createElement('div')
+          })
+
+          // Create expandable widget for basemap gallery
+          const basemapExpand = new Expand({
+            view: view,
+            content: basemapGallery,
+            expanded: false,
+            expandIconClass: 'esri-icon-basemap',
+            expandTooltip: 'Basemap Gallery'
+          })
+
+          // Store references
+          basemapGalleryRef.current = basemapGallery
+          basemapExpandRef.current = basemapExpand
+
+          // Add to map UI (position it away from our custom controls)
+          view.ui.add(basemapExpand, 'bottom-left')
+          
+          console.log('✅ Map widgets initialized successfully')
         } catch (error) {
-          console.error('❌ Error adding zoom widget:', error)
+          console.error('❌ Error adding map widgets:', error)
         }
       })
-      
-      console.log('✅ Simplified map controls initialized')
     }
 
     // Start the initialization process with a small delay
     setTimeout(waitForDOMAndInitialize, 300)
 
     return () => {
-      console.log('🧹 Cleaning up map...')
+      console.log('🧹 Component unmounting, cleaning up map...')
       isMounted = false
+      
+      // Only destroy if we actually have references
       if (viewRef.current) {
         try {
+          console.log('🗑️ Destroying map view...')
           viewRef.current.destroy()
-          viewRef.current = null
         } catch (error) {
           console.error('Error destroying map view:', error)
         }
       }
       
+      // Reset initialization flag only on actual unmount
+      initializationRef.current = false
+      
       // Clean up widget references
+      viewRef.current = null
       basemapGalleryRef.current = null
       measurementWidgetRef.current = null
       basemapExpandRef.current = null
@@ -381,7 +588,7 @@ const MapViewer: React.FC<MapViewerProps> = ({
       miningLayerRef.current = null
       printWidgetRef.current = null
     }
-  }, [])
+  }, []) // Empty dependency array to run only once
 
   // Handle zooming to selected concessions
   useEffect(() => {
@@ -433,39 +640,69 @@ const MapViewer: React.FC<MapViewerProps> = ({
           <div className="bg-white rounded shadow-md border border-gray-200 p-1">
             <input 
               type="text"
-              placeholder="🔍 Search concessions..."
+              placeholder="🔍 Search concessions & districts..."
               className="w-48 px-2 py-1 border-0 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-400"
               onKeyPress={(e) => {
                 if (e.key === 'Enter') {
                   const value = (e.target as HTMLInputElement).value
-                  if (value && miningLayerRef.current) {
+                  if (value) {
                     console.log('🔍 Searching for:', value)
-                    // Simple search implementation
+                    // Search in both layers
                     const require = (window as any).require
                     require(['esri/rest/support/Query'], (Query: any) => {
-                      const query = new Query({
-                        where: `Name LIKE '%${value}%' OR ContactPerson LIKE '%${value}%' OR Town LIKE '%${value}%' OR District LIKE '%${value}%' OR Region LIKE '%${value}%'`,
-                        returnGeometry: true,
-                        outFields: ['*']
-                      })
                       
-                      miningLayerRef.current.queryFeatures(query).then((results: any) => {
-                        if (results.features.length > 0) {
-                          // Zoom to first result
-                          viewRef.current.goTo(results.features[0].geometry.extent.expand(2))
-                          // Show popup for first result
-                          viewRef.current.popup.open({
-                            features: [results.features[0]],
-                            location: results.features[0].geometry.centroid
-                          })
-                          alert(`Found ${results.features.length} matching concessions. Zoomed to first result.`)
-                        } else {
-                          alert('No matching concessions found.')
-                        }
-                      }).catch((error: any) => {
-                        console.error('Search error:', error)
-                        alert('Search failed. Please try again.')
-                      })
+                      // Search mining concessions first
+                      if (miningLayerRef.current) {
+                        const miningQuery = new Query({
+                          where: `Name LIKE '%${value}%' OR ContactPerson LIKE '%${value}%' OR Town LIKE '%${value}%' OR District LIKE '%${value}%' OR Region LIKE '%${value}%'`,
+                          returnGeometry: true,
+                          outFields: ['*']
+                        })
+                        
+                        miningLayerRef.current.queryFeatures(miningQuery).then((results: any) => {
+                          if (results.features.length > 0) {
+                            // Zoom to first result
+                            viewRef.current.goTo(results.features[0].geometry.extent.expand(2))
+                            // Show popup for first result
+                            viewRef.current.popup.open({
+                              features: [results.features[0]],
+                              location: results.features[0].geometry.centroid
+                            })
+                            alert(`Found ${results.features.length} matching concessions. Zoomed to first result.`)
+                            return
+                          }
+                          
+                          // If no mining concessions found, search districts
+                          if (environmentalLayerRef.current) {
+                            const districtsQuery = new Query({
+                              where: `DIST_NAME LIKE '%${value}%' OR REGION LIKE '%${value}%' OR CAPITAL LIKE '%${value}%'`,
+                              returnGeometry: true,
+                              outFields: ['*']
+                            })
+                            
+                            environmentalLayerRef.current.queryFeatures(districtsQuery).then((districtResults: any) => {
+                              if (districtResults.features.length > 0) {
+                                // Zoom to first district result
+                                viewRef.current.goTo(districtResults.features[0].geometry.extent.expand(1.1))
+                                // Show popup for first result
+                                viewRef.current.popup.open({
+                                  features: [districtResults.features[0]],
+                                  location: districtResults.features[0].geometry.centroid
+                                })
+                                alert(`Found ${districtResults.features.length} matching districts. Zoomed to first result.`)
+                              } else {
+                                alert('No matching concessions or districts found.')
+                              }
+                            }).catch((error: any) => {
+                              console.error('Districts search error:', error)
+                              alert('Search failed. Please try again.')
+                            })
+                          }
+                        }).catch((error: any) => {
+                          console.error('Mining concessions search error:', error)
+                          alert('Search failed. Please try again.')
+                        })
+                      }
                     })
                   }
                 }
@@ -536,21 +773,6 @@ const MapViewer: React.FC<MapViewerProps> = ({
           {/* Compact Tool Buttons */}
           <button 
             onClick={() => {
-              if (viewRef.current && viewRef.current.map) {
-                const currentBasemap = viewRef.current.map.basemap.id
-                const newBasemap = currentBasemap === 'topo-vector' ? 'satellite' : 'topo-vector'
-                viewRef.current.map.basemap = newBasemap
-                console.log('🗺️ Switched basemap to:', newBasemap)
-              }
-            }}
-            className="bg-white hover:bg-gray-100 border border-gray-300 rounded shadow-md px-2 py-1 text-gray-700 text-xs"
-            title="Toggle Basemap"
-          >
-            🗺️
-          </button>
-          
-          <button 
-            onClick={() => {
               if (miningLayerRef.current) {
                 const currentlyVisible = miningLayerRef.current.labelsVisible
                 miningLayerRef.current.labelsVisible = !currentlyVisible
@@ -562,6 +784,21 @@ const MapViewer: React.FC<MapViewerProps> = ({
             title="Toggle Labels"
           >
             🏷️
+          </button>
+          
+          <button 
+            onClick={() => {
+              if (environmentalLayerRef.current) {
+                const currentlyVisible = environmentalLayerRef.current.visible
+                environmentalLayerRef.current.visible = !currentlyVisible
+                console.log('🗺️ Districts layer:', !currentlyVisible ? 'ON' : 'OFF')
+                alert(`Districts layer turned ${!currentlyVisible ? 'ON' : 'OFF'}`)
+              }
+            }}
+            className="bg-white hover:bg-gray-100 border border-gray-300 rounded shadow-md px-2 py-1 text-gray-700 text-xs"
+            title="Toggle Districts Layer"
+          >
+            🗺️
           </button>
           
           <button 
@@ -610,13 +847,17 @@ const MapViewer: React.FC<MapViewerProps> = ({
           >
             🖨️
           </button>
+          
+
         </div>
       )}
       
       {/* Compact Status Indicator */}
       {mapStatus === 'loaded' && (
-        <div className="absolute bottom-2 left-2 z-50 bg-green-600 text-white rounded px-2 py-1 text-xs font-medium shadow-md">
-          ✅ Live Data
+        <div className="absolute bottom-2 left-2 z-50 flex space-x-2">
+          <div className="bg-green-600 text-white rounded px-2 py-1 text-xs font-medium shadow-md">
+            ✅ Live Data
+          </div>
         </div>
       )}
       
