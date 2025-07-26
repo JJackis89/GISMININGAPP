@@ -28,7 +28,7 @@ This means the environment variables are not configured in Vercel.
 
    ```
    Name: VITE_FIREBASE_API_KEY
-   Value: AIzaSyCLg2ND14wPDzjjVGUko2vvhbJGosp4gxQ
+   Value: [YOUR_NEW_FIREBASE_API_KEY_HERE]
    Environment: Production, Preview, Development (select all)
    ```
 
@@ -81,7 +81,7 @@ If you prefer command line:
 ```bash
 # Set all environment variables at once
 vercel env add VITE_FIREBASE_API_KEY production
-# Enter: AIzaSyCLg2ND14wPDzjjVGUko2vvhbJGosp4gxQ
+# Enter: [YOUR_NEW_FIREBASE_API_KEY_HERE]
 
 vercel env add VITE_FIREBASE_AUTH_DOMAIN production
 # Enter: mining-login.firebaseapp.com
