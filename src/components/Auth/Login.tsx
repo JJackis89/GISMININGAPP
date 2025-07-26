@@ -1,14 +1,12 @@
 import { useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
-import { Lock, Mail, Zap, Home } from 'lucide-react'
-import SignUp from './SignUp'
+import { Lock, Mail } from 'lucide-react'
 
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [showSignUp, setShowSignUp] = useState(false)
   const { login, isUsingFirebase, isUsingLocal } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -21,10 +19,6 @@ export default function Login() {
       setError(result.error || 'Invalid email or password. Please check your credentials and try again.')
     }
     setLoading(false)
-  }
-
-  if (showSignUp) {
-    return <SignUp onBackToLogin={() => setShowSignUp(false)} />
   }
 
   return (
@@ -71,35 +65,7 @@ export default function Login() {
             <p className="text-gray-600">Mining Concession Management System</p>
           </div>
 
-          {/* Authentication Status Indicator */}
-          {isUsingFirebase && (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6 text-sm">
-              <div className="flex items-center gap-2 text-green-800">
-                <Zap className="h-4 w-4" />
-                <span className="font-medium">Firebase Authentication Active</span>
-              </div>
-              <p className="text-green-700 mt-1">
-                Using secure Firebase authentication for production environment.
-              </p>
-            </div>
-          )}
 
-          {isUsingLocal && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 text-sm">
-              <div className="flex items-center gap-2 text-blue-800 mb-2">
-                <Home className="h-4 w-4" />
-                <span className="font-medium">Local Demo Mode</span>
-              </div>
-              <p className="text-blue-700 mb-2">
-                Firebase not configured. Using local demo authentication.
-              </p>
-              <div className="text-blue-600 text-xs space-y-1">
-                <div><strong>Admin:</strong> admin@epa.gov.gh / adminpassword</div>
-                <div><strong>Staff:</strong> staff@epa.gov.gh / staffpassword</div>
-                <div><strong>Guest:</strong> guest@epa.gov.gh / guestpassword</div>
-              </div>
-            </div>
-          )}
 
           <div className="bg-white rounded-lg shadow-xl p-8">
             <form className="space-y-6" onSubmit={handleSubmit}>
@@ -172,17 +138,8 @@ export default function Login() {
 
             <div className="mt-6 border-t border-gray-200 pt-6">
               <div className="text-center">
-                <p className="text-sm text-gray-600 mb-4">
-                  Don't have an account?
-                </p>
-                <button
-                  onClick={() => setShowSignUp(true)}
-                  className="w-full bg-white border border-epa-orange-600 text-epa-orange-600 hover:bg-epa-orange-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-epa-orange-500 font-medium py-2 px-4 rounded-md transition duration-150 ease-in-out"
-                >
-                  Create New Account
-                </button>
-                <p className="text-xs text-gray-500 mt-3">
-                  Contact your EPA administrator for access approval
+                <p className="text-xs text-gray-500">
+                  For EPA staff use only. Contact your system administrator for access.
                 </p>
               </div>
             </div>

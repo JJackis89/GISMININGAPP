@@ -802,44 +802,161 @@ const MapViewer: React.FC<MapViewerProps> = ({
           </button>
           
           <button 
-            onClick={() => {
-              if (viewRef.current) {
-                console.log('🖨️ Initiating print...')
-                // Simple screenshot approach
-                viewRef.current.takeScreenshot({
-                  format: 'png',
-                  quality: 90,
-                  width: 1200,
-                  height: 800
-                }).then((screenshot: any) => {
-                  // Open screenshot in new window for printing
+            onClick={async () => {
+              if (viewRef.current && miningLayerRef.current) {
+                console.log('🖨️ Initiating enhanced print with concession details...')
+                
+                try {
+                  // Take screenshot first
+                  console.log('📸 Taking map screenshot...')
+                  const screenshot = await viewRef.current.takeScreenshot({
+                    format: 'png',
+                    quality: 90,
+                    width: 1200,
+                    height: 800
+                  })
+                  
+                  // Query visible concessions in the current map extent
+                  console.log('🔍 Querying visible concessions...')
+                  const query = miningLayerRef.current.createQuery()
+                  query.geometry = viewRef.current.extent
+                  query.spatialRelationship = 'intersects'
+                  query.returnGeometry = false
+                  query.outFields = ['*']
+                  // Remove problematic orderByFields
+                  
+                  const concessionsResult = await miningLayerRef.current.queryFeatures(query)
+                  console.log(`📋 Found ${concessionsResult.features.length} visible concessions`)
+
+                  // Build concessions table
+                  let concessionsTable = ''
+                  let featureCount = 0
+                  
+                  if (concessionsResult.features && concessionsResult.features.length > 0) {
+                    featureCount = concessionsResult.features.length
+                    concessionsTable = `
+                      <div style="margin: 20px; page-break-inside: avoid;">
+                        <h2 style="color: #1e7e34; margin-bottom: 15px;">Visible Concessions (${featureCount})</h2>
+                        <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
+                          <thead>
+                            <tr style="background-color: #f8f9fa;">
+                              <th style="border: 1px solid #ddd; padding: 6px; text-align: left;">Concession Name</th>
+                              <th style="border: 1px solid #ddd; padding: 6px; text-align: left;">Holder</th>
+                              <th style="border: 1px solid #ddd; padding: 6px; text-align: left;">Mineral</th>
+                              <th style="border: 1px solid #ddd; padding: 6px; text-align: left;">Town</th>
+                              <th style="border: 1px solid #ddd; padding: 6px; text-align: left;">District</th>
+                              <th style="border: 1px solid #ddd; padding: 6px; text-align: right;">Size (Acres)</th>
+                              <th style="border: 1px solid #ddd; padding: 6px; text-align: left;">Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                    `
+                    
+                    concessionsResult.features.forEach((feature: any) => {
+                      const attrs = feature.attributes
+                      concessionsTable += `
+                        <tr>
+                          <td style="border: 1px solid #ddd; padding: 4px; font-size: 9px;">${attrs.Concession_Name || attrs.CONCESSION_NAME || attrs.Name || 'N/A'}</td>
+                          <td style="border: 1px solid #ddd; padding: 4px; font-size: 9px;">${attrs.Holder || attrs.HOLDER || attrs.Owner || 'N/A'}</td>
+                          <td style="border: 1px solid #ddd; padding: 4px; font-size: 9px;">${attrs.Mineral || attrs.MINERAL || attrs.Type || 'N/A'}</td>
+                          <td style="border: 1px solid #ddd; padding: 4px; font-size: 9px;">${attrs.Town || attrs.TOWN || attrs.Settlement || 'N/A'}</td>
+                          <td style="border: 1px solid #ddd; padding: 4px; font-size: 9px;">${attrs.District || attrs.DISTRICT || attrs.Dist_Name || 'N/A'}</td>
+                          <td style="border: 1px solid #ddd; padding: 4px; text-align: right; font-size: 9px;">${attrs.Acreage || attrs.ACREAGE || attrs.Size ? Number(attrs.Acreage || attrs.ACREAGE || attrs.Size).toLocaleString() : 'N/A'}</td>
+                          <td style="border: 1px solid #ddd; padding: 4px; font-size: 9px;">${attrs.License_Status || attrs.STATUS || attrs.Status || 'N/A'}</td>
+                        </tr>
+                      `
+                    })
+                    
+                    concessionsTable += '</tbody></table></div>'
+                  } else {
+                    concessionsTable = `
+                      <div style="margin: 20px; text-align: center; color: #666;">
+                        <p>No concessions visible in current map extent</p>
+                      </div>
+                    `
+                  }
+
+                  // Open enhanced report in new window
                   const printWindow = window.open('', '_blank')
                   if (printWindow) {
                     printWindow.document.write(`
                       <html>
                         <head>
-                          <title>Ghana Mining Concessions Map</title>
+                          <title>Ghana Mining Concessions Report</title>
                           <style>
-                            body { margin: 0; text-align: center; }
-                            img { max-width: 100%; height: auto; }
-                            h1 { font-family: Arial, sans-serif; color: #333; }
-                            @media print { body { margin: 0; } }
+                            body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
+                            .header { text-align: center; margin-bottom: 30px; border-bottom: 3px solid #1e7e34; padding-bottom: 20px; }
+                            .header-logo { display: flex; align-items: center; justify-content: center; margin-bottom: 15px; }
+                            .epa-logo { 
+                              width: 100px; 
+                              height: 100px; 
+                              margin-right: 20px;
+                              filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+                            }
+                            .header-title { margin: 0; }
+                            .header h1 { color: #1e7e34; margin-bottom: 5px; font-size: 24px; }
+                            .header p { color: #666; margin: 5px 0; }
+                            .org-name { font-size: 18px; font-weight: bold; color: #1e7e34; margin: 10px 0; }
+                            .map-section { text-align: center; margin: 20px 0; page-break-inside: avoid; }
+                            .map-section img { max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 8px; }
+                            table { margin: 0 auto; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+                            @media print { 
+                              body { margin: 0; padding: 15px; }
+                              .header { margin-bottom: 20px; }
+                              .epa-logo { print-color-adjust: exact; }
+                            }
                           </style>
                         </head>
                         <body>
-                          <h1>Ghana Mining Concessions Map</h1>
-                          <p>Environmental Protection Authority - ${new Date().toLocaleDateString()}</p>
-                          <img src="${screenshot.dataUrl}" alt="Mining Concessions Map">
-                          <script>window.onload = () => window.print();</script>
+                          <div class="header">
+                            <div class="header-logo">
+                              <img src="/epa-logo.png" alt="EPA Ghana Logo" class="epa-logo" />
+                              <div class="header-title">
+                                <h1>Ghana Mining Concessions Report</h1>
+                                <div class="org-name">Environmental Protection Authority</div>
+                              </div>
+                            </div>
+                            <p>Republic of Ghana • Ministry of Environment, Science, Technology and Innovation</p>
+                            <p><strong>Report Generated:</strong> ${new Date().toLocaleString()}</p>
+                            <p><strong>Map Extent:</strong> ${viewRef.current.extent.xmin.toFixed(2)}, ${viewRef.current.extent.ymin.toFixed(2)} to ${viewRef.current.extent.xmax.toFixed(2)}, ${viewRef.current.extent.ymax.toFixed(2)}</p>
+                          </div>
+                          
+                          <div class="map-section">
+                            <h2 style="color: #1e7e34;">Current Map View</h2>
+                            <img src="${screenshot.dataUrl}" alt="Mining Concessions Map">
+                          </div>
+                          
+                          ${concessionsTable}
+                          
+                          <div style="margin-top: 30px; text-align: center; font-size: 10px; color: #666; border-top: 2px solid #1e7e34; padding-top: 15px;">
+                            <p style="font-weight: bold;">📊 Report Summary</p>
+                            <p>This report contains ${featureCount} concession(s) visible in the current map extent.</p>
+                            <p><strong>Data Source:</strong> Ghana Environmental Protection Authority Mining Database</p>
+                            <p><strong>Generated by:</strong> EPA Mining Concessions Management System</p>
+                            <p style="margin-top: 10px; font-style: italic;">Environmental Protection Authority • Republic of Ghana</p>
+                          </div>
+                          
+                          <script>
+                            window.onload = () => {
+                              setTimeout(() => window.print(), 500);
+                            };
+                          </script>
                         </body>
                       </html>
                     `)
                     printWindow.document.close()
                   }
-                }).catch((error: any) => {
-                  console.error('Screenshot error:', error)
-                  alert('Print feature temporarily unavailable.')
-                })
+                  
+                } catch (error) {
+                  console.error('Enhanced print error details:', {
+                    error: error,
+                    message: error instanceof Error ? error.message : 'Unknown error',
+                    viewReady: !!viewRef.current,
+                    layerReady: !!miningLayerRef.current,
+                    layerLoaded: miningLayerRef.current?.loaded
+                  })
+                  alert('Print feature temporarily unavailable. Please try again.')
+                }
               }
             }}
             className="bg-white hover:bg-gray-100 border border-gray-300 rounded shadow-md px-2 py-1 text-gray-700 text-xs"
