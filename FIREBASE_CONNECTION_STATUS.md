@@ -12,13 +12,13 @@ Your EPA Mining Concessions Dashboard is now connected to your actual Firebase p
 
 ### 📋 **Configuration Applied**
 ```env
-⚠️ API Key: [REGENERATED_FOR_SECURITY]
+✅ API Key: AIzaSyCLg2ND14wPDzjjVGUko2vvhbJGosp4gxQ (NEW SECURE KEY)
 ✅ Auth Domain: mining-login.firebaseapp.com
 ✅ Project ID: mining-login
 ✅ Storage Bucket: mining-login.firebasestorage.app
 ✅ Messaging Sender ID: 736251542602
-⚠️ App ID: [UPDATE_WITH_NEW_APP_ID]
-✅ Analytics ID: G-9HMEX4HJJR
+✅ App ID: 1:736251542602:web:5a723ac79e1a4834203ab3 (NEW SECURE APP ID)
+✅ Analytics ID: G-D47WB77G43 (UPDATED)
 ```
 
 ### 🚀 **What's Now Active**
