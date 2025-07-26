@@ -4,7 +4,6 @@ import {
   Map, 
   Filter, 
   BarChart3, 
-  FileText, 
   ChevronLeft,
   ChevronRight
 } from 'lucide-react'
@@ -13,7 +12,6 @@ const menuItems = [
   { icon: Map, label: 'Map View', path: '/map-view' },
   { icon: Filter, label: 'Filters', path: '/filters' },
   { icon: BarChart3, label: 'Analytics', path: '/analytics' },
-  { icon: FileText, label: 'Reports', path: '/reports' },
 ]
 
 export default function Sidebar() {

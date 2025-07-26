@@ -6,7 +6,6 @@ import Sidebar from './components/Layout/Sidebar'
 import MapViewPage from './pages/MapViewPage'
 import FiltersPage from './pages/FiltersPage'
 import AnalyticsPage from './pages/AnalyticsPage'
-import ReportsPage from './pages/ReportsPage'
 import PrintTestPage from './pages/PrintTestPage'
 import PrintVerification from './components/PrintVerification'
 
@@ -40,7 +39,6 @@ function App() {
             <Route path="/map-view" element={<MapViewPage />} />
             <Route path="/filters" element={<FiltersPage />} />
             <Route path="/analytics" element={<AnalyticsPage />} />
-            <Route path="/reports" element={<ReportsPage />} />
             <Route path="/print-test" element={<PrintTestPage />} />
             <Route path="/print-verify" element={<PrintVerification />} />
             <Route path="*" element={<Navigate to="/" replace />} />
