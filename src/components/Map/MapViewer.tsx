@@ -962,7 +962,7 @@ const MapViewer: React.FC<MapViewerProps> = ({
             }}
             className="bg-white hover:bg-gray-100 border border-gray-300 rounded shadow-md px-2 py-1 text-gray-700 text-xs"
             title="Print Map"
-this i          >
+          >
             🖨️
           </button>
           
