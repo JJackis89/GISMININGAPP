@@ -962,7 +962,7 @@ const MapViewer: React.FC<MapViewerProps> = ({
             }}
             className="bg-white hover:bg-gray-100 border border-gray-300 rounded shadow-md px-2 py-1 text-gray-700 text-xs"
             title="Print Map"
-          >
+this i          >
             🖨️
           </button>
           
@@ -970,9 +970,9 @@ const MapViewer: React.FC<MapViewerProps> = ({
         </div>
       )}
       
-      {/* Compact Status Indicator */}
+      {/* Compact Status Indicator - Moved to bottom-right to avoid basemap gallery conflict */}
       {mapStatus === 'loaded' && (
-        <div className="absolute bottom-2 left-2 z-50 flex flex-col space-y-1">
+        <div className="absolute bottom-2 right-2 z-50 flex flex-col space-y-1 items-end">
           <div className="bg-green-600 text-white rounded px-2 py-1 text-xs font-medium shadow-md">
             ✅ Live Data
           </div>
