@@ -37,7 +37,7 @@ export const PrintLayoutTemplate: React.FC<PrintLayoutTemplateProps> = ({
   };
 
   const formatSize = (size: number) => {
-    return `${size.toLocaleString()} hectares`;
+    return `${size.toLocaleString()} acres`;
   };
 
   const getStatusColor = (status: string) => {
@@ -196,7 +196,7 @@ export const PrintLayoutTemplate: React.FC<PrintLayoutTemplateProps> = ({
 
           <div className="bg-rose-50 border border-rose-200 p-6 rounded-lg">
             <label className="block text-sm font-bold text-rose-800 mb-2 uppercase tracking-wide">
-              Permit Type
+              License Type
             </label>
             <p className="text-lg font-semibold text-rose-900 capitalize">
               {concession.permitType}
@@ -226,7 +226,7 @@ export const PrintLayoutTemplate: React.FC<PrintLayoutTemplateProps> = ({
 
           <div className="bg-cyan-50 border border-cyan-200 p-6 rounded-lg">
             <label className="block text-sm font-bold text-cyan-800 mb-2 uppercase tracking-wide">
-              Concession Owner
+              Contact Person
             </label>
             <p className="text-lg font-semibold text-cyan-900">
               {concession.owner}
@@ -347,7 +347,7 @@ export const PrintLayoutTemplate: React.FC<PrintLayoutTemplateProps> = ({
               <strong>Perimeter:</strong> {boundaryGeometry.perimeter.toFixed(2)} km
             </div>
             <div className="bg-orange-50 p-3 rounded">
-              <strong>Calculated Area:</strong> {boundaryGeometry.area.toLocaleString()} hectares
+              <strong>Calculated Area:</strong> {boundaryGeometry.area.toLocaleString()} acres
             </div>
           </div>
         </div>

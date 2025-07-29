@@ -158,7 +158,7 @@ export default function MapViewer({ className = '', onDataLoaded }: MapViewerPro
                   { fieldName: 'COMPANY_NAME', label: 'Company' },
                   { fieldName: 'STATUS', label: 'Status' },
                   { fieldName: 'MINERAL_TYPE', label: 'Mineral Type' },
-                  { fieldName: 'AREA_HECTARES', label: 'Area (Hectares)' },
+                  { fieldName: 'AREA_HECTARES', label: 'Area (Acres)' },
                   { fieldName: 'DATE_GRANTED', label: 'Date Granted' }
                 ]
               }

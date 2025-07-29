@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Feature Service</title>
+    <script src="https://js.arcgis.com/4.28/"></script>
+</head>
+<body>
+    <h1>Feature Service Debug</h1>
+    <div id="results"></div>
+
+    <script>
+        require([
+            "esri/layers/FeatureLayer"
+        ], function(FeatureLayer) {
+            const featureLayer = new FeatureLayer({
+                url: "https://services6.arcgis.com/Av3KhOzUMUMSORVt/arcgis/rest/services/Mining_Concessions/FeatureServer/0",
+                outFields: ["*"]
+            });
+
+            featureLayer.load().then(function() {
+                console.log("Layer loaded:", featureLayer.title);
+                console.log("Fields:", featureLayer.fields.map(f => ({ name: f.name, alias: f.alias, type: f.type })));
+                
+                // Query features
+                const query = featureLayer.createQuery();
+                query.returnGeometry = true;
+                query.outFields = ["*"];
+                query.num = 5; // Limit to 5 features for debugging
+                
+                featureLayer.queryFeatures(query).then(function(featureSet) {
+                    console.log("Feature count:", featureSet.features.length);
+                    if (featureSet.features.length > 0) {
+                        console.log("Sample feature attributes:", featureSet.features[0].attributes);
+                        console.log("Sample feature geometry:", featureSet.features[0].geometry);
+                    }
+                    
+                    document.getElementById('results').innerHTML = `
+                        <h2>Layer Info</h2>
+                        <p><strong>Title:</strong> ${featureLayer.title || 'No title'}</p>
+                        <p><strong>Feature Count:</strong> ${featureSet.features.length}</p>
+                        <p><strong>Fields:</strong></p>
+                        <ul>
+                            ${featureLayer.fields.map(f => `<li>${f.name} (${f.alias}) - ${f.type}</li>`).join('')}
+                        </ul>
+                        <h3>Sample Feature Attributes:</h3>
+                        <pre>${featureSet.features.length > 0 ? JSON.stringify(featureSet.features[0].attributes, null, 2) : 'No features found'}</pre>
+                    `;
+                }).catch(function(error) {
+                    console.error("Query failed:", error);
+                    document.getElementById('results').innerHTML = `<p style="color: red;">Query failed: ${error.message}</p>`;
+                });
+                
+            }).catch(function(error) {
+                console.error("Layer load failed:", error);
+                document.getElementById('results').innerHTML = `<p style="color: red;">Layer load failed: ${error.message}</p>`;
+            });
+        });
+    </script>
+</body>
+</html>

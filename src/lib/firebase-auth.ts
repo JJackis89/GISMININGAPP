@@ -26,17 +26,26 @@ export class FirebaseAuthService {
       id: firebaseUser.uid,
       email: firebaseUser.email || '',
       full_name: firebaseUser.displayName || 'User',
+      display_name: firebaseUser.displayName || 'User',
+      department: 'EPA Department', // Default department
       role: this.determineUserRole(firebaseUser.email || ''),
       created_at: firebaseUser.metadata.creationTime || new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
+      last_login: new Date().toISOString(),
+      is_active: true
     }
   }
 
   // Determine user role based on email (you can customize this logic)
-  private determineUserRole(email: string): 'admin' | 'staff' | 'guest' {
+  private determineUserRole(email: string): 'admin' | 'manager' | 'staff' | 'viewer' {
+    // Real admin user
+    if (email === 'gismining025@gmail.com') return 'admin'
+    
+    // Other admin patterns
     if (email.includes('admin@')) return 'admin'
+    if (email.includes('manager@')) return 'manager'
     if (email.includes('@epa.gov.gh')) return 'staff'
-    return 'guest'
+    return 'viewer'
   }
 
   // Check if Firebase is properly configured

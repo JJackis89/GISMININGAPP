@@ -389,29 +389,29 @@ const MapViewer: React.FC<MapViewerProps> = ({
               type: 'simple-fill',
               color: [0, 0, 0, 0], // Transparent fill
               outline: {
-                color: [0, 112, 255, 0.8], // Blue outline
+                color: [0, 0, 0, 0.8], // Black outline
                 width: 2
               }
             }
           },
           popupTemplate: {
-            title: 'District: {DIST_NAME}', // Adjust field name as needed
+            title: 'District: {district}', // Use correct field name
             content: [
               {
                 type: 'fields',
                 fieldInfos: [
                   { 
-                    fieldName: 'DIST_NAME', 
+                    fieldName: 'district', 
                     label: 'District Name',
                     visible: true
                   },
                   { 
-                    fieldName: 'REGION', 
+                    fieldName: 'region', 
                     label: 'Region',
                     visible: true
                   },
                   { 
-                    fieldName: 'CAPITAL', 
+                    fieldName: 'capital', 
                     label: 'Capital',
                     visible: true
                   }
@@ -419,32 +419,8 @@ const MapViewer: React.FC<MapViewerProps> = ({
               }
             ]
           },
-          // Add labeling configuration for districts
-          labelingInfo: [
-            {
-              labelExpressionInfo: {
-                expression: '$feature.district' // Use district field for labeling
-              },
-              symbol: {
-                type: 'text',
-                color: [0, 112, 255, 1],
-                backgroundColor: [255, 255, 255, 0.8],
-                borderLineColor: [0, 112, 255, 1],
-                borderLineSize: 1,
-                font: {
-                  family: 'Arial',
-                  size: 10,
-                  weight: 'bold'
-                },
-                haloColor: 'white',
-                haloSize: 2
-              },
-              minScale: 800000, // Show labels at appropriate zoom level
-              maxScale: 0
-            }
-          ],
-          labelsVisible: true, // Ensure labels are visible by default
-          opacity: 0.7, // Make it semi-transparent so it doesn't interfere with mining concessions
+          // District labels disabled - district names shown only in popups
+          labelsVisible: false, // District labels disabled - names shown only in popups
           visible: true
         })
 
@@ -467,8 +443,8 @@ const MapViewer: React.FC<MapViewerProps> = ({
               // Create new search source for districts layer
               const districtsSearchSource = {
                 layer: districtsLayer,
-                searchFields: ["DIST_NAME", "REGION", "CAPITAL"],
-                displayField: "DIST_NAME",
+                searchFields: ["district", "region", "capital"],
+                displayField: "district",
                 exactMatch: false,
                 outFields: ["*"],
                 name: "Districts",
@@ -630,372 +606,476 @@ const MapViewer: React.FC<MapViewerProps> = ({
   }, [selectedConcessions, onZoomToSelected])
 
   return (
-    <div className={`relative h-full ${className}`}>
-      <div ref={mapRef} className="w-full h-full" />
+    <div className={`relative h-full ${className} bg-gray-50`}>
+      {/* Professional Map Container */}
+      <div className="relative h-full rounded-lg overflow-hidden shadow-lg border border-gray-200">
+        <div ref={mapRef} className="w-full h-full" />
+        
+        {/* Professional Header Banner */}
+        {mapStatus === 'loaded' && (
+          <div className="absolute top-0 left-0 right-0 z-40 bg-gradient-to-r from-green-800 to-green-700 text-white px-4 py-2 shadow-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
+                  <span className="text-green-800 font-bold text-sm">EPA</span>
+                </div>
+                <div>
+                  <h1 className="text-sm font-semibold">Ghana Mining Concessions</h1>
+                  <p className="text-xs text-green-100">Environmental Protection Authority</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2 text-xs">
+                <div className="bg-green-600 px-2 py-1 rounded-full flex items-center space-x-1">
+                  <div className="w-2 h-2 bg-green-300 rounded-full animate-pulse"></div>
+                  <span>Live Data</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       
-      {/* Working Controls - Top Left */}
-      {mapStatus === 'loaded' && (
-        <div className="absolute top-2 left-2 z-50 flex flex-col space-y-1">
-          {/* Search Box */}
-          <div className="bg-white rounded shadow-md border border-gray-200 p-1">
-            <input 
-              type="text"
-              placeholder="🔍 Search concessions & districts..."
-              className="w-48 px-2 py-1 border-0 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-400"
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  const value = (e.target as HTMLInputElement).value
-                  if (value) {
-                    console.log('🔍 Searching for:', value)
-                    // Search in both layers
-                    const require = (window as any).require
-                    require(['esri/rest/support/Query'], (Query: any) => {
-                      
-                      // Search mining concessions first
-                      if (miningLayerRef.current) {
-                        const miningQuery = new Query({
-                          where: `Name LIKE '%${value}%' OR ContactPerson LIKE '%${value}%' OR Town LIKE '%${value}%' OR District LIKE '%${value}%' OR Region LIKE '%${value}%'`,
-                          returnGeometry: true,
-                          outFields: ['*']
-                        })
-                        
-                        miningLayerRef.current.queryFeatures(miningQuery).then((results: any) => {
-                          if (results.features.length > 0) {
-                            // Zoom to first result
-                            viewRef.current.goTo(results.features[0].geometry.extent.expand(2))
-                            // Show popup for first result
-                            viewRef.current.popup.open({
-                              features: [results.features[0]],
-                              location: results.features[0].geometry.centroid
-                            })
-                            alert(`Found ${results.features.length} matching concessions. Zoomed to first result.`)
-                            return
-                          }
+        {/* Professional Controls - Top Left */}
+        {mapStatus === 'loaded' && (
+          <div className="absolute top-16 left-4 z-50 flex flex-col space-y-3">
+            {/* Enhanced Search Panel */}
+            <div className="bg-white rounded-lg shadow-xl border border-gray-300 overflow-hidden">
+              <div className="bg-gray-50 px-3 py-2 border-b border-gray-200">
+                <h3 className="text-xs font-semibold text-gray-700 flex items-center">
+                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                  </svg>
+                  Search & Locate
+                </h3>
+              </div>
+              <div className="p-3 space-y-2">
+                <input 
+                  type="text"
+                  placeholder="Search concessions, districts, towns..."
+                  className="w-56 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      const value = (e.target as HTMLInputElement).value
+                      if (value) {
+                        console.log('🔍 Searching for:', value)
+                        // Search in both layers
+                        const require = (window as any).require
+                        require(['esri/rest/support/Query'], (Query: any) => {
                           
-                          // If no mining concessions found, search districts
-                          if (environmentalLayerRef.current) {
-                            const districtsQuery = new Query({
-                              where: `DIST_NAME LIKE '%${value}%' OR REGION LIKE '%${value}%' OR CAPITAL LIKE '%${value}%'`,
+                          // Search mining concessions first
+                          if (miningLayerRef.current) {
+                            const miningQuery = new Query({
+                              where: `Name LIKE '%${value}%' OR ContactPerson LIKE '%${value}%' OR Town LIKE '%${value}%' OR District LIKE '%${value}%' OR Region LIKE '%${value}%'`,
                               returnGeometry: true,
                               outFields: ['*']
                             })
                             
-                            environmentalLayerRef.current.queryFeatures(districtsQuery).then((districtResults: any) => {
-                              if (districtResults.features.length > 0) {
-                                // Zoom to first district result
-                                viewRef.current.goTo(districtResults.features[0].geometry.extent.expand(1.1))
+                            miningLayerRef.current.queryFeatures(miningQuery).then((results: any) => {
+                              if (results.features.length > 0) {
+                                // Zoom to first result
+                                viewRef.current.goTo(results.features[0].geometry.extent.expand(2))
                                 // Show popup for first result
                                 viewRef.current.popup.open({
-                                  features: [districtResults.features[0]],
-                                  location: districtResults.features[0].geometry.centroid
+                                  features: [results.features[0]],
+                                  location: results.features[0].geometry.centroid
                                 })
-                                alert(`Found ${districtResults.features.length} matching districts. Zoomed to first result.`)
-                              } else {
-                                alert('No matching concessions or districts found.')
+                                alert(`Found ${results.features.length} matching concessions. Zoomed to first result.`)
+                                return
+                              }
+                              
+                              // If no mining concessions found, search districts
+                              if (environmentalLayerRef.current) {
+                                const districtsQuery = new Query({
+                                  where: `district LIKE '%${value}%' OR region LIKE '%${value}%' OR capital LIKE '%${value}%'`,
+                                  returnGeometry: true,
+                                  outFields: ['*']
+                                })
+                                
+                                environmentalLayerRef.current.queryFeatures(districtsQuery).then((districtResults: any) => {
+                                  if (districtResults.features.length > 0) {
+                                    // Zoom to first district result
+                                    viewRef.current.goTo(districtResults.features[0].geometry.extent.expand(1.1))
+                                    // Show popup for first result
+                                    viewRef.current.popup.open({
+                                      features: [districtResults.features[0]],
+                                      location: districtResults.features[0].geometry.centroid
+                                    })
+                                    alert(`Found ${districtResults.features.length} matching districts. Zoomed to first result.`)
+                                  } else {
+                                    alert('No matching concessions or districts found.')
+                                  }
+                                }).catch((error: any) => {
+                                  console.error('Districts search error:', error)
+                                  alert('Search failed. Please try again.')
+                                })
                               }
                             }).catch((error: any) => {
-                              console.error('Districts search error:', error)
+                              console.error('Mining concessions search error:', error)
                               alert('Search failed. Please try again.')
                             })
                           }
-                        }).catch((error: any) => {
-                          console.error('Mining concessions search error:', error)
-                          alert('Search failed. Please try again.')
                         })
                       }
-                    })
-                  }
-                }
-              }}
-            />
-          </div>
-          
-          {/* Location Button */}
-          <button 
-            onClick={() => {
-              if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                  (position) => {
-                    const { latitude, longitude } = position.coords
-                    if (viewRef.current) {
-                      viewRef.current.center = [longitude, latitude]
-                      viewRef.current.zoom = 12
-                      console.log('📍 Located user at:', latitude, longitude)
-                      alert('Found your location!')
                     }
-                  },
-                  (error) => {
-                    console.error('Geolocation error:', error)
-                    alert('Could not get your location. Please enable location services.')
-                  }
-                )
-              } else {
-                alert('Geolocation not supported by this browser.')
-              }
-            }}
-            className="bg-white hover:bg-gray-100 border border-gray-300 rounded shadow-md px-2 py-1 text-gray-700 text-xs font-medium flex items-center justify-center"
-            title="Find My Location"
-          >
-            📍
-          </button>
-        </div>
-      )}
-      
-      {/* Working Controls - Top Right */}
-      {mapStatus === 'loaded' && (
-        <div className="absolute top-2 right-2 z-50 flex flex-col space-y-1">
-          {/* Zoom Controls */}
-          <div className="bg-white rounded shadow-md border border-gray-200 flex flex-col">
-            <button 
-              onClick={() => {
-                if (viewRef.current) {
-                  viewRef.current.zoom = viewRef.current.zoom + 1
-                }
-              }}
-              className="hover:bg-gray-100 rounded-t px-2 py-1 text-gray-700 text-sm font-bold border-b border-gray-200"
-              title="Zoom In"
-            >
-              +
-            </button>
-            <button 
-              onClick={() => {
-                if (viewRef.current) {
-                  viewRef.current.zoom = viewRef.current.zoom - 1
-                }
-              }}
-              className="hover:bg-gray-100 rounded-b px-2 py-1 text-gray-700 text-sm font-bold"
-              title="Zoom Out"
-            >
-              −
-            </button>
+                  }}
+                />
+                <button 
+                  onClick={() => {
+                    if (navigator.geolocation) {
+                      navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                          const { latitude, longitude } = position.coords
+                          if (viewRef.current) {
+                            viewRef.current.center = [longitude, latitude]
+                            viewRef.current.zoom = 12
+                            console.log('📍 Located user at:', latitude, longitude)
+                            alert('Found your location!')
+                          }
+                        },
+                        (error) => {
+                          console.error('Geolocation error:', error)
+                          alert('Could not get your location. Please enable location services.')
+                        }
+                      )
+                    } else {
+                      alert('Geolocation not supported by this browser.')
+                    }
+                  }}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-md text-sm font-medium flex items-center justify-center space-x-2 transition-colors duration-200"
+                  title="Find My Location"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                  </svg>
+                  <span>My Location</span>
+                </button>
+              </div>
+            </div>
           </div>
-          
-          {/* Compact Tool Buttons */}
-          <button 
-            onClick={() => {
-              if (miningLayerRef.current) {
-                const currentlyVisible = miningLayerRef.current.labelsVisible
-                miningLayerRef.current.labelsVisible = !currentlyVisible
-                console.log('🏷️ Labels:', !currentlyVisible ? 'ON' : 'OFF')
-                alert(`Labels turned ${!currentlyVisible ? 'ON' : 'OFF'}`)
-              }
-            }}
-            className="bg-white hover:bg-gray-100 border border-gray-300 rounded shadow-md px-2 py-1 text-gray-700 text-xs"
-            title="Toggle Labels"
-          >
-            🏷️
-          </button>
-          
-          <button 
-            onClick={() => {
-              if (environmentalLayerRef.current) {
-                const currentlyVisible = environmentalLayerRef.current.visible
-                environmentalLayerRef.current.visible = !currentlyVisible
-                console.log('🗺️ Districts layer:', !currentlyVisible ? 'ON' : 'OFF')
-                alert(`Districts layer turned ${!currentlyVisible ? 'ON' : 'OFF'}`)
-              }
-            }}
-            className="bg-white hover:bg-gray-100 border border-gray-300 rounded shadow-md px-2 py-1 text-gray-700 text-xs"
-            title="Toggle Districts Layer"
-          >
-            🗺️
-          </button>
-          
-          <button 
-            onClick={async () => {
-              if (viewRef.current && miningLayerRef.current) {
-                console.log('🖨️ Initiating enhanced print with concession details...')
+        )}
+        
+        {/* Professional Controls - Top Right */}
+        {mapStatus === 'loaded' && (
+          <div className="absolute top-16 right-4 z-50 flex flex-col space-y-3">
+            {/* Enhanced Navigation Panel */}
+            <div className="bg-white rounded-lg shadow-xl border border-gray-300 overflow-hidden">
+              <div className="bg-gray-50 px-3 py-2 border-b border-gray-200">
+                <h3 className="text-xs font-semibold text-gray-700 flex items-center">
+                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"></path>
+                  </svg>
+                  Map Controls
+                </h3>
+              </div>
+              <div className="p-3 space-y-2">
+                {/* Zoom Controls */}
+                <div className="flex space-x-1">
+                  <button 
+                    onClick={() => {
+                      if (viewRef.current) {
+                        viewRef.current.zoom = viewRef.current.zoom + 1
+                      }
+                    }}
+                    className="flex-1 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-md px-3 py-2 text-gray-700 text-sm font-bold transition-colors duration-200"
+                    title="Zoom In"
+                  >
+                    <svg className="w-4 h-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                  </button>
+                  <button 
+                    onClick={() => {
+                      if (viewRef.current) {
+                        viewRef.current.zoom = viewRef.current.zoom - 1
+                      }
+                    }}
+                    className="flex-1 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-md px-3 py-2 text-gray-700 text-sm font-bold transition-colors duration-200"
+                    title="Zoom Out"
+                  >
+                    <svg className="w-4 h-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 12H6"></path>
+                    </svg>
+                  </button>
+                </div>
                 
-                try {
-                  // Take screenshot first
-                  console.log('📸 Taking map screenshot...')
-                  const screenshot = await viewRef.current.takeScreenshot({
-                    format: 'png',
-                    quality: 90,
-                    width: 1200,
-                    height: 800
-                  })
+                {/* Layer Toggle Buttons */}
+                <div className="space-y-2">
+                  <button 
+                    onClick={() => {
+                      if (miningLayerRef.current) {
+                        const currentlyVisible = miningLayerRef.current.labelsVisible
+                        miningLayerRef.current.labelsVisible = !currentlyVisible
+                        console.log('🏷️ Mining Labels:', !currentlyVisible ? 'ON' : 'OFF')
+                      }
+                    }}
+                    className="w-full bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md px-3 py-2 text-blue-700 text-sm font-medium flex items-center justify-center space-x-2 transition-colors duration-200"
+                    title="Toggle Mining Concession Labels"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                    </svg>
+                    <span>Mine Labels</span>
+                  </button>
                   
-                  // Query visible concessions in the current map extent
-                  console.log('🔍 Querying visible concessions...')
-                  const query = miningLayerRef.current.createQuery()
-                  query.geometry = viewRef.current.extent
-                  query.spatialRelationship = 'intersects'
-                  query.returnGeometry = false
-                  query.outFields = ['*']
-                  // Remove problematic orderByFields
-                  
-                  const concessionsResult = await miningLayerRef.current.queryFeatures(query)
-                  console.log(`📋 Found ${concessionsResult.features.length} visible concessions`)
+                  <button 
+                    onClick={() => {
+                      if (environmentalLayerRef.current) {
+                        const currentlyVisible = environmentalLayerRef.current.visible
+                        environmentalLayerRef.current.visible = !currentlyVisible
+                        console.log('🗺️ Districts layer:', !currentlyVisible ? 'ON' : 'OFF')
+                      }
+                    }}
+                    className="w-full bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-md px-3 py-2 text-purple-700 text-sm font-medium flex items-center justify-center space-x-2 transition-colors duration-200"
+                    title="Toggle Districts Layer"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+                    </svg>
+                    <span>Districts</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            {/* Enhanced Tools Panel */}
+            <div className="bg-white rounded-lg shadow-xl border border-gray-300 overflow-hidden">
+              <div className="bg-gray-50 px-3 py-2 border-b border-gray-200">
+                <h3 className="text-xs font-semibold text-gray-700 flex items-center">
+                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                  </svg>
+                  Report Tools
+                </h3>
+              </div>
+              <div className="p-3">
+                <button 
+                  onClick={async () => {
+                    if (viewRef.current && miningLayerRef.current) {
+                      console.log('🖨️ Initiating enhanced print with concession details...')
+                      
+                      try {
+                        // Take screenshot first
+                        console.log('📸 Taking map screenshot...')
+                        const screenshot = await viewRef.current.takeScreenshot({
+                          format: 'png',
+                          quality: 90,
+                          width: 1200,
+                          height: 800
+                        })
+                        
+                        // Query visible concessions in the current map extent
+                        console.log('🔍 Querying visible concessions...')
+                        const query = miningLayerRef.current.createQuery()
+                        query.geometry = viewRef.current.extent
+                        query.spatialRelationship = 'intersects'
+                        query.returnGeometry = false
+                        query.outFields = ['*']
+                        
+                        const concessionsResult = await miningLayerRef.current.queryFeatures(query)
+                        console.log(`📋 Found ${concessionsResult.features.length} visible concessions`)
 
-                  // Build concessions table
-                  let concessionsTable = ''
-                  let featureCount = 0
-                  
-                  if (concessionsResult.features && concessionsResult.features.length > 0) {
-                    featureCount = concessionsResult.features.length
-                    concessionsTable = `
-                      <div style="margin: 20px; page-break-inside: avoid;">
-                        <h2 style="color: #1e7e34; margin-bottom: 15px;">Visible Concessions (${featureCount})</h2>
-                        <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
-                          <thead>
-                            <tr style="background-color: #f8f9fa;">
-                              <th style="border: 1px solid #ddd; padding: 6px; text-align: left;">Concession Name</th>
-                              <th style="border: 1px solid #ddd; padding: 6px; text-align: left;">Holder</th>
-                              <th style="border: 1px solid #ddd; padding: 6px; text-align: left;">Mineral</th>
-                              <th style="border: 1px solid #ddd; padding: 6px; text-align: left;">Town</th>
-                              <th style="border: 1px solid #ddd; padding: 6px; text-align: left;">District</th>
-                              <th style="border: 1px solid #ddd; padding: 6px; text-align: right;">Size (Acres)</th>
-                              <th style="border: 1px solid #ddd; padding: 6px; text-align: left;">Status</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                    `
-                    
-                    concessionsResult.features.forEach((feature: any) => {
-                      const attrs = feature.attributes
-                      concessionsTable += `
-                        <tr>
-                          <td style="border: 1px solid #ddd; padding: 4px; font-size: 9px;">${attrs.Concession_Name || attrs.CONCESSION_NAME || attrs.Name || 'N/A'}</td>
-                          <td style="border: 1px solid #ddd; padding: 4px; font-size: 9px;">${attrs.Holder || attrs.HOLDER || attrs.Owner || 'N/A'}</td>
-                          <td style="border: 1px solid #ddd; padding: 4px; font-size: 9px;">${attrs.Mineral || attrs.MINERAL || attrs.Type || 'N/A'}</td>
-                          <td style="border: 1px solid #ddd; padding: 4px; font-size: 9px;">${attrs.Town || attrs.TOWN || attrs.Settlement || 'N/A'}</td>
-                          <td style="border: 1px solid #ddd; padding: 4px; font-size: 9px;">${attrs.District || attrs.DISTRICT || attrs.Dist_Name || 'N/A'}</td>
-                          <td style="border: 1px solid #ddd; padding: 4px; text-align: right; font-size: 9px;">${attrs.Acreage || attrs.ACREAGE || attrs.Size ? Number(attrs.Acreage || attrs.ACREAGE || attrs.Size).toLocaleString() : 'N/A'}</td>
-                          <td style="border: 1px solid #ddd; padding: 4px; font-size: 9px;">${attrs.License_Status || attrs.STATUS || attrs.Status || 'N/A'}</td>
-                        </tr>
-                      `
-                    })
-                    
-                    concessionsTable += '</tbody></table></div>'
-                  } else {
-                    concessionsTable = `
-                      <div style="margin: 20px; text-align: center; color: #666;">
-                        <p>No concessions visible in current map extent</p>
-                      </div>
-                    `
-                  }
-
-                  // Open enhanced report in new window
-                  const printWindow = window.open('', '_blank')
-                  if (printWindow) {
-                    printWindow.document.write(`
-                      <html>
-                        <head>
-                          <title>Ghana Mining Concessions Report</title>
-                          <style>
-                            body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
-                            .header { text-align: center; margin-bottom: 30px; border-bottom: 3px solid #1e7e34; padding-bottom: 20px; }
-                            .header-logo { display: flex; align-items: center; justify-content: center; margin-bottom: 15px; }
-                            .epa-logo { 
-                              width: 100px; 
-                              height: 100px; 
-                              margin-right: 20px;
-                              filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
-                            }
-                            .header-title { margin: 0; }
-                            .header h1 { color: #1e7e34; margin-bottom: 5px; font-size: 24px; }
-                            .header p { color: #666; margin: 5px 0; }
-                            .org-name { font-size: 18px; font-weight: bold; color: #1e7e34; margin: 10px 0; }
-                            .map-section { text-align: center; margin: 20px 0; page-break-inside: avoid; }
-                            .map-section img { max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 8px; }
-                            table { margin: 0 auto; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-                            @media print { 
-                              body { margin: 0; padding: 15px; }
-                              .header { margin-bottom: 20px; }
-                              .epa-logo { print-color-adjust: exact; }
-                            }
-                          </style>
-                        </head>
-                        <body>
-                          <div class="header">
-                            <div class="header-logo">
-                              <img src="/epa-logo.png" alt="EPA Ghana Logo" class="epa-logo" />
-                              <div class="header-title">
-                                <h1>Ghana Mining Concessions Report</h1>
-                                <div class="org-name">Environmental Protection Authority</div>
-                              </div>
+                        // Build concessions table
+                        let concessionsTable = ''
+                        let featureCount = 0
+                        
+                        if (concessionsResult.features && concessionsResult.features.length > 0) {
+                          featureCount = concessionsResult.features.length
+                          concessionsTable = `
+                            <div style="margin: 20px; page-break-inside: avoid;">
+                              <h2 style="color: #1e7e34; margin-bottom: 15px;">Visible Concessions (${featureCount})</h2>
+                              <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
+                                <thead>
+                                  <tr style="background-color: #f8f9fa;">
+                                    <th style="border: 1px solid #ddd; padding: 6px; text-align: left;">Concession Name</th>
+                                    <th style="border: 1px solid #ddd; padding: 6px; text-align: left;">Holder</th>
+                                    <th style="border: 1px solid #ddd; padding: 6px; text-align: left;">Mineral</th>
+                                    <th style="border: 1px solid #ddd; padding: 6px; text-align: left;">Town</th>
+                                    <th style="border: 1px solid #ddd; padding: 6px; text-align: left;">District</th>
+                                    <th style="border: 1px solid #ddd; padding: 6px; text-align: right;">Size (Acres)</th>
+                                    <th style="border: 1px solid #ddd; padding: 6px; text-align: left;">Status</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                          `
+                          
+                          concessionsResult.features.forEach((feature: any) => {
+                            const attrs = feature.attributes
+                            concessionsTable += `
+                              <tr>
+                                <td style="border: 1px solid #ddd; padding: 4px; font-size: 9px;">${attrs.Concession_Name || attrs.CONCESSION_NAME || attrs.Name || 'N/A'}</td>
+                                <td style="border: 1px solid #ddd; padding: 4px; font-size: 9px;">${attrs.Holder || attrs.HOLDER || attrs.Owner || 'N/A'}</td>
+                                <td style="border: 1px solid #ddd; padding: 4px; font-size: 9px;">${attrs.Mineral || attrs.MINERAL || attrs.Type || 'N/A'}</td>
+                                <td style="border: 1px solid #ddd; padding: 4px; font-size: 9px;">${attrs.Town || attrs.TOWN || attrs.Settlement || 'N/A'}</td>
+                                <td style="border: 1px solid #ddd; padding: 4px; font-size: 9px;">${attrs.District || attrs.DISTRICT || attrs.Dist_Name || 'N/A'}</td>
+                                <td style="border: 1px solid #ddd; padding: 4px; text-align: right; font-size: 9px;">${attrs.Acreage || attrs.ACREAGE || attrs.Size ? Number(attrs.Acreage || attrs.ACREAGE || attrs.Size).toLocaleString() : 'N/A'}</td>
+                                <td style="border: 1px solid #ddd; padding: 4px; font-size: 9px;">${attrs.License_Status || attrs.STATUS || attrs.Status || 'N/A'}</td>
+                              </tr>
+                            `
+                          })
+                          
+                          concessionsTable += '</tbody></table></div>'
+                        } else {
+                          concessionsTable = `
+                            <div style="margin: 20px; text-align: center; color: #666;">
+                              <p>No concessions visible in current map extent</p>
                             </div>
-                            <p>Republic of Ghana • Ministry of Environment, Science, Technology and Innovation</p>
-                            <p><strong>Report Generated:</strong> ${new Date().toLocaleString()}</p>
-                            <p><strong>Map Extent:</strong> ${viewRef.current.extent.xmin.toFixed(2)}, ${viewRef.current.extent.ymin.toFixed(2)} to ${viewRef.current.extent.xmax.toFixed(2)}, ${viewRef.current.extent.ymax.toFixed(2)}</p>
-                          </div>
-                          
-                          <div class="map-section">
-                            <h2 style="color: #1e7e34;">Current Map View</h2>
-                            <img src="${screenshot.dataUrl}" alt="Mining Concessions Map">
-                          </div>
-                          
-                          ${concessionsTable}
-                          
-                          <div style="margin-top: 30px; text-align: center; font-size: 10px; color: #666; border-top: 2px solid #1e7e34; padding-top: 15px;">
-                            <p style="font-weight: bold;">📊 Report Summary</p>
-                            <p>This report contains ${featureCount} concession(s) visible in the current map extent.</p>
-                            <p><strong>Data Source:</strong> Ghana Environmental Protection Authority Mining Database</p>
-                            <p><strong>Generated by:</strong> EPA Mining Concessions Management System</p>
-                            <p style="margin-top: 10px; font-style: italic;">Environmental Protection Authority • Republic of Ghana</p>
-                            <p style="margin-top: 5px; font-size: 9px; color: #888;">Developed by the GIS Department, EPA</p>
-                          </div>
-                          
-                          <script>
-                            window.onload = () => {
-                              setTimeout(() => window.print(), 500);
-                            };
-                          </script>
-                        </body>
-                      </html>
-                    `)
-                    printWindow.document.close()
-                  }
-                  
-                } catch (error) {
-                  console.error('Enhanced print error details:', {
-                    error: error,
-                    message: error instanceof Error ? error.message : 'Unknown error',
-                    viewReady: !!viewRef.current,
-                    layerReady: !!miningLayerRef.current,
-                    layerLoaded: miningLayerRef.current?.loaded
-                  })
-                  alert('Print feature temporarily unavailable. Please try again.')
-                }
-              }
-            }}
-            className="bg-white hover:bg-gray-100 border border-gray-300 rounded shadow-md px-2 py-1 text-gray-700 text-xs"
-            title="Print Map"
-          >
-            🖨️
-          </button>
-          
+                          `
+                        }
 
-        </div>
-      )}
-      
-      {/* Compact Status Indicator - Moved to bottom-right to avoid basemap gallery conflict */}
-      {mapStatus === 'loaded' && (
-        <div className="absolute bottom-2 right-2 z-50 flex flex-col space-y-1 items-end">
-          <div className="bg-green-600 text-white rounded px-2 py-1 text-xs font-medium shadow-md">
-            ✅ Live Data
+                        // Open enhanced report in new window
+                        const printWindow = window.open('', '_blank')
+                        if (printWindow) {
+                          printWindow.document.write(`
+                            <html>
+                              <head>
+                                <title>Ghana Mining Concessions Report</title>
+                                <style>
+                                  body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
+                                  .header { text-align: center; margin-bottom: 30px; border-bottom: 3px solid #1e7e34; padding-bottom: 20px; }
+                                  .header-logo { display: flex; align-items: center; justify-content: center; margin-bottom: 15px; }
+                                  .epa-logo { 
+                                    width: 100px; 
+                                    height: 100px; 
+                                    margin-right: 20px;
+                                    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+                                  }
+                                  .header-title { margin: 0; }
+                                  .header h1 { color: #1e7e34; margin-bottom: 5px; font-size: 24px; }
+                                  .header p { color: #666; margin: 5px 0; }
+                                  .org-name { font-size: 18px; font-weight: bold; color: #1e7e34; margin: 10px 0; }
+                                  .map-section { text-align: center; margin: 20px 0; page-break-inside: avoid; }
+                                  .map-section img { max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 8px; }
+                                  table { margin: 0 auto; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+                                  @media print { 
+                                    body { margin: 0; padding: 15px; }
+                                    .header { margin-bottom: 20px; }
+                                    .epa-logo { print-color-adjust: exact; }
+                                  }
+                                </style>
+                              </head>
+                              <body>
+                                <div class="header">
+                                  <div class="header-logo">
+                                    <img src="/epa-logo.png" alt="EPA Ghana Logo" class="epa-logo" />
+                                    <div class="header-title">
+                                      <h1>Ghana Mining Concessions Report</h1>
+                                      <div class="org-name">Environmental Protection Authority</div>
+                                    </div>
+                                  </div>
+                                  <p>Republic of Ghana • Ministry of Environment, Science, Technology and Innovation</p>
+                                  <p><strong>Report Generated:</strong> ${new Date().toLocaleString()}</p>
+                                  <p><strong>Map Extent:</strong> ${viewRef.current.extent.xmin.toFixed(2)}, ${viewRef.current.extent.ymin.toFixed(2)} to ${viewRef.current.extent.xmax.toFixed(2)}, ${viewRef.current.extent.ymax.toFixed(2)}</p>
+                                </div>
+                                
+                                <div class="map-section">
+                                  <h2 style="color: #1e7e34;">Current Map View</h2>
+                                  <img src="${screenshot.dataUrl}" alt="Mining Concessions Map">
+                                </div>
+                                
+                                ${concessionsTable}
+                                
+                                <div style="margin-top: 30px; text-align: center; font-size: 10px; color: #666; border-top: 2px solid #1e7e34; padding-top: 15px;">
+                                  <p style="font-weight: bold;">📊 Report Summary</p>
+                                  <p>This report contains ${featureCount} concession(s) visible in the current map extent.</p>
+                                  <p><strong>Data Source:</strong> Ghana Environmental Protection Authority Mining Database</p>
+                                  <p><strong>Generated by:</strong> EPA Mining Concessions Management System</p>
+                                  <p style="margin-top: 10px; font-style: italic;">Environmental Protection Authority • Republic of Ghana</p>
+                                  <p style="margin-top: 5px; font-size: 9px; color: #888;">Developed by the GIS Department, EPA</p>
+                                </div>
+                                
+                                <script>
+                                  window.onload = () => {
+                                    setTimeout(() => window.print(), 500);
+                                  };
+                                </script>
+                              </body>
+                            </html>
+                          `)
+                          printWindow.document.close()
+                        }
+                        
+                      } catch (error) {
+                        console.error('Enhanced print error details:', {
+                          error: error,
+                          message: error instanceof Error ? error.message : 'Unknown error',
+                          viewReady: !!viewRef.current,
+                          layerReady: !!miningLayerRef.current,
+                          layerLoaded: miningLayerRef.current?.loaded
+                        })
+                        alert('Print feature temporarily unavailable. Please try again.')
+                      }
+                    }
+                  }}
+                  className="w-full bg-orange-50 hover:bg-orange-100 border border-orange-200 rounded-md px-3 py-2 text-orange-700 text-sm font-medium flex items-center justify-center space-x-2 transition-colors duration-200"
+                  title="Generate Report"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+                  </svg>
+                  <span>Print Report</span>
+                </button>
+              </div>
+            </div>
           </div>
-          <div className="bg-gray-800 text-white rounded px-2 py-1 text-xs font-medium shadow-md opacity-75">
-            Developed by the GIS Department, EPA
+        )}
+        
+        {/* Professional Footer Status */}
+        {mapStatus === 'loaded' && (
+          <div className="absolute bottom-4 right-4 z-50">
+            <div className="bg-white rounded-lg shadow-xl border border-gray-300 overflow-hidden">
+              <div className="bg-gray-50 px-3 py-1 border-b border-gray-200">
+                <div className="text-xs font-semibold text-gray-700">System Status</div>
+              </div>
+              <div className="p-3 space-y-2">
+                <div className="flex items-center space-x-2 text-xs">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  <span className="text-green-700 font-medium">Data Connected</span>
+                </div>
+                <div className="text-xs text-gray-600 border-t border-gray-200 pt-2">
+                  <div className="font-medium">EPA Ghana GIS Department</div>
+                  <div className="text-gray-500">Mining Concessions Portal</div>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
       
+      {/* Professional Loading State */}
       {mapStatus === 'loading' && (
-        <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-            <p className="text-gray-600">Loading map...</p>
+        <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center">
+          <div className="text-center bg-white rounded-lg shadow-xl p-8 border border-gray-200">
+            <div className="w-16 h-16 mx-auto mb-4">
+              <div className="w-16 h-16 border-4 border-green-200 border-t-green-600 rounded-full animate-spin"></div>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">Loading EPA Mining Portal</h3>
+            <p className="text-gray-600 text-sm">Initializing map services and data layers...</p>
+            <div className="mt-4 flex items-center justify-center space-x-2 text-xs text-gray-500">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce"></div>
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+            </div>
           </div>
         </div>
       )}
       
+      {/* Professional Error State */}
       {mapStatus === 'error' && (
-        <div className="absolute inset-0 bg-red-50 flex items-center justify-center">
-          <div className="text-center">
-            <p className="text-red-600 mb-2">Error loading map</p>
-            <p className="text-red-500 text-sm">{errorMessage}</p>
+        <div className="absolute inset-0 bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center">
+          <div className="text-center bg-white rounded-lg shadow-xl p-8 border border-red-200">
+            <div className="w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
+              <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.314 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-red-800 mb-2">Map Loading Error</h3>
+            <p className="text-red-600 text-sm mb-4">{errorMessage}</p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200"
+            >
+              Reload Application
+            </button>
           </div>
         </div>
       )}

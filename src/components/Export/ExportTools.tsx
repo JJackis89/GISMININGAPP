@@ -7,7 +7,7 @@ interface ExportToolsProps {
 
 export default function ExportTools({ concessions }: ExportToolsProps) {
   const exportToCSV = () => {
-    const headers = ['ID', 'Name', 'Size (ha)', 'Owner', 'Permit Type', 'Expiry Date', 'District', 'Region', 'Status']
+    const headers = ['ID', 'Name', 'Size (acres)', 'Contact Person', 'License Type', 'Expiry Date', 'District', 'Region', 'License Status']
     const csvContent = [
       headers.join(','),
       ...concessions.map(c => [
@@ -86,8 +86,8 @@ export default function ExportTools({ concessions }: ExportToolsProps) {
       
       // Add summary stats
       pdf.text(`Total Concessions: ${concessions.length}`, 20, 50)
-      pdf.text(`Active Permits: ${concessions.filter(c => c.status === 'active').length}`, 20, 60)
-      pdf.text(`Expired Permits: ${concessions.filter(c => c.status === 'expired').length}`, 20, 70)
+      pdf.text(`Active Permits: ${concessions.filter(c => c.status === 'Active').length}`, 20, 60)
+      pdf.text(`Expired Permits: ${concessions.filter(c => c.status === 'Expired').length}`, 20, 70)
       
       // Try to capture map if visible
       const mapElement = document.querySelector('.map-container')

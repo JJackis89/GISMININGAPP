@@ -8,9 +8,13 @@ export interface User {
   id: string
   email: string
   full_name?: string
-  role: 'admin' | 'staff' | 'guest'
+  display_name?: string
+  department?: string
+  role: 'admin' | 'manager' | 'staff' | 'viewer'
   created_at: string
   updated_at: string
+  last_login?: string
+  is_active: boolean
 }
 
 export interface AuthSession {
@@ -29,16 +33,54 @@ class LocalAuthSystem {
   }
 
   private initializeDefaultUsers() {
-    // Default admin user
+    // Real admin user - gismining025@gmail.com
+    this.users.set('gismining025@gmail.com', {
+      password: 'admin123', // You can change this password
+      user: {
+        id: 'real-admin-001',
+        email: 'gismining025@gmail.com',
+        full_name: 'GIS Mining Administrator',
+        display_name: 'GIS Mining Admin',
+        department: 'EPA GIS Department',
+        role: 'admin',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        last_login: new Date().toISOString(),
+        is_active: true
+      }
+    })
+
+    // Default admin user (backup)
     this.users.set('admin@epa.gov.gh', {
       password: 'adminpassword',
       user: {
         id: 'admin-001',
         email: 'admin@epa.gov.gh',
         full_name: 'EPA Administrator',
+        display_name: 'EPA Administrator',
+        department: 'GIS Department',
         role: 'admin',
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        last_login: new Date().toISOString(),
+        is_active: true
+      }
+    })
+
+    // Default manager user
+    this.users.set('manager@epa.gov.gh', {
+      password: 'managerpassword',
+      user: {
+        id: 'manager-001',
+        email: 'manager@epa.gov.gh',
+        full_name: 'Mining Manager',
+        display_name: 'Mining Manager',
+        department: 'Mining Division',
+        role: 'manager',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        last_login: new Date(Date.now() - 86400000).toISOString(),
+        is_active: true
       }
     })
 
@@ -49,22 +91,30 @@ class LocalAuthSystem {
         id: 'staff-001',
         email: 'staff@epa.gov.gh',
         full_name: 'EPA Staff Member',
+        display_name: 'EPA Staff Member',
+        department: 'Field Operations',
         role: 'staff',
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        last_login: new Date(Date.now() - 172800000).toISOString(),
+        is_active: true
       }
     })
 
-    // Demo guest user
-    this.users.set('guest@epa.gov.gh', {
-      password: 'guestpassword',
+    // Demo viewer user
+    this.users.set('viewer@epa.gov.gh', {
+      password: 'viewerpassword',
       user: {
-        id: 'guest-001',
-        email: 'guest@epa.gov.gh',
-        full_name: 'Guest User',
-        role: 'guest',
+        id: 'viewer-001',
+        email: 'viewer@epa.gov.gh',
+        full_name: 'Public Viewer',
+        display_name: 'Public Viewer',
+        department: 'Public Relations',
+        role: 'viewer',
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        last_login: new Date(Date.now() - 604800000).toISOString(),
+        is_active: true
       }
     })
   }
@@ -129,9 +179,11 @@ class LocalAuthSystem {
       id: `user-${Date.now()}`,
       email: normalizedEmail,
       full_name: fullName || 'New User',
+      display_name: fullName || 'New User',
       role: 'staff', // Default role for new signups
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
+      is_active: true
     }
 
     this.users.set(normalizedEmail, {
@@ -182,7 +234,7 @@ class LocalAuthSystem {
   }
 
   // Method to add new users (for admin functionality)
-  addUser(email: string, password: string, fullName: string, role: 'admin' | 'staff' | 'guest'): boolean {
+  addUser(email: string, password: string, fullName: string, role: 'admin' | 'manager' | 'staff' | 'viewer', department?: string): boolean {
     const normalizedEmail = email.toLowerCase()
     
     if (this.users.has(normalizedEmail)) {
@@ -193,9 +245,12 @@ class LocalAuthSystem {
       id: `user-${Date.now()}`,
       email: normalizedEmail,
       full_name: fullName,
+      display_name: fullName,
+      department: department || '',
       role,
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
+      is_active: true
     }
 
     this.users.set(normalizedEmail, {
@@ -204,6 +259,32 @@ class LocalAuthSystem {
     })
 
     return true
+  }
+
+  // Method to update user role
+  updateUserRole(userId: string, newRole: 'admin' | 'manager' | 'staff' | 'viewer'): boolean {
+    for (const [email, record] of this.users.entries()) {
+      if (record.user.id === userId) {
+        record.user.role = newRole
+        record.user.updated_at = new Date().toISOString()
+        this.users.set(email, record)
+        return true
+      }
+    }
+    return false
+  }
+
+  // Method to toggle user active status
+  toggleUserStatus(userId: string): boolean {
+    for (const [email, record] of this.users.entries()) {
+      if (record.user.id === userId) {
+        record.user.is_active = !record.user.is_active
+        record.user.updated_at = new Date().toISOString()
+        this.users.set(email, record)
+        return true
+      }
+    }
+    return false
   }
 
   // Get all users (for admin functionality)

@@ -57,17 +57,17 @@ export const arcgisConfig: ArcGISConfig = {
     miningConcessions: 'https://services6.arcgis.com/Av3KhOzUMUMSORVt/arcgis/rest/services/Mining_Concessions/FeatureServer/0'
   },
   
-  // Field mappings - add more variations based on your actual data schema
+  // Field mappings - exact field names from EPA Mining Concessions hosted layer
   fieldMappings: {
-    id: ['OBJECTID', 'ID', 'FID', 'PERMIT_ID', 'CONCESSION_ID'],
-    name: ['Name', 'COMPANY_NAME', 'PROJECT_NAME', 'CONCESSION_NAME', 'MINE_NAME'],
-    owner: ['Owner', 'COMPANY', 'OPERATOR', 'HOLDER', 'APPLICANT'],
-    size: ['Area', 'SIZE', 'HECTARES', 'AREA_HA', 'ACREAGE'],
-    permitType: ['PERMIT_TYPE', 'TYPE', 'CATEGORY', 'SCALE', 'OPERATION_TYPE'],
-    expiryDate: ['EXPIRY_DATE', 'END_DATE', 'EXPIRATION', 'VALID_UNTIL'],
-    district: ['District', 'DISTRICT', 'LOCALITY', 'ADMINISTRATIVE_AREA'],
-    region: ['Region', 'REGION', 'PROVINCE', 'STATE'],
-    status: ['Status', 'STATUS', 'PERMIT_STATUS', 'STATE', 'CONDITION'],
+    id: ['OBJECTID', 'ID', 'FID'],
+    name: ['Name', 'COMPANY_NAME', 'PROJECT_NAME', 'CONCESSION_NAME'],
+    owner: ['ContactPerson', 'Owner', 'COMPANY', 'OPERATOR'],
+    size: ['Size', 'Shape__Area', 'AREA_HA', 'ACREAGE'],
+    permitType: ['LicenseType', 'PERMIT_TYPE', 'TYPE', 'CATEGORY'],
+    expiryDate: ['Expiry_Date', 'EXPIRY_DATE', 'END_DATE'],
+    district: ['District', 'LOCALITY', 'ADMINISTRATIVE_AREA'],
+    region: ['Region', 'PROVINCE', 'STATE'],
+    status: ['LicenseStatus', 'Status', 'PERMIT_STATUS', 'STATE'],
     phone: ['PHONE', 'CONTACT_PHONE', 'TELEPHONE', 'MOBILE'],
     email: ['EMAIL', 'CONTACT_EMAIL', 'E_MAIL'],
     address: ['ADDRESS', 'LOCATION', 'PHYSICAL_ADDRESS', 'POSTAL_ADDRESS']

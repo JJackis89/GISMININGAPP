@@ -45,8 +45,8 @@ export default function ReportsPanel({ dataService, concessions }: ReportsPanelP
       })
 
       // Calculate compliance status
-      const compliant = concessions.filter(c => c.status === 'active').length
-      const expired = concessions.filter(c => c.status === 'expired').length
+      const compliant = concessions.filter(c => c.status === 'Active').length
+      const expired = concessions.filter(c => c.status === 'Expired').length
       const expiringCount = expiring.length
 
       setReportData({
@@ -64,7 +64,7 @@ export default function ReportsPanel({ dataService, concessions }: ReportsPanelP
   const generateCSVReport = () => {
     const csvContent = [
       // Headers
-      'ID,Name,Owner,Region,District,Size (ha),Permit Type,Status,Expiry Date',
+      'ID,Name,Contact Person,Region,District,Size (acres),License Type,License Status,Expiry Date',
       // Data rows
       ...concessions.map(c => 
         `${c.id},"${c.name}","${c.owner}",${c.region},${c.district},${c.size},${c.permitType},${c.status},${c.permitExpiryDate}`
@@ -181,7 +181,7 @@ export default function ReportsPanel({ dataService, concessions }: ReportsPanelP
                   <div>
                     <div className="font-medium text-gray-900">{region}</div>
                     <div className="text-xs text-gray-600 mt-1">
-                      {data.count} concessions • {data.totalArea.toLocaleString()} hectares
+                      {data.count} concessions • {data.totalArea.toLocaleString()} acres
                     </div>
                   </div>
                   <div className="text-right">

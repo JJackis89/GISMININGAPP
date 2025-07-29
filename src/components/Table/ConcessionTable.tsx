@@ -51,7 +51,19 @@ export default function ConcessionTable({ concessions }: ConcessionTableProps) {
   }
 
   const getTypeColor = (type: string) => {
-    return type === 'large-scale' ? 'bg-epa-blue-100 text-epa-blue-800' : 'bg-purple-100 text-purple-800'
+    // Color coding based on actual hosted layer license types
+    switch (type) {
+      case 'Small Scale':
+        return 'bg-purple-100 text-purple-800'
+      case 'Reconnaissance':
+        return 'bg-blue-100 text-blue-800'
+      case 'Prospecting':
+        return 'bg-green-100 text-green-800'
+      case 'Mining Lease':
+        return 'bg-epa-blue-100 text-epa-blue-800'
+      default:
+        return 'bg-gray-100 text-gray-800'
+    }
   }
 
   const isExpiringSoon = (expiryDate: string) => {
@@ -105,13 +117,13 @@ export default function ConcessionTable({ concessions }: ConcessionTableProps) {
                 <SortButton field="id">ID</SortButton>
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                <SortButton field="size">Size (ha)</SortButton>
+                <SortButton field="size">Size (acres)</SortButton>
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                <SortButton field="owner">Owner</SortButton>
+                <SortButton field="owner">Contact Person</SortButton>
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                <SortButton field="permitType">Type</SortButton>
+                <SortButton field="permitType">License Type</SortButton>
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 <SortButton field="permitExpiryDate">Expiry Date</SortButton>
@@ -120,7 +132,7 @@ export default function ConcessionTable({ concessions }: ConcessionTableProps) {
                 <SortButton field="region">Region</SortButton>
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                <SortButton field="status">Status</SortButton>
+                <SortButton field="status">License Status</SortButton>
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
@@ -150,7 +162,7 @@ export default function ConcessionTable({ concessions }: ConcessionTableProps) {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getTypeColor(concession.permitType)}`}>
-                    {concession.permitType.replace('-', ' ')}
+                    {concession.permitType}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -226,22 +238,22 @@ export default function ConcessionTable({ concessions }: ConcessionTableProps) {
                 </div>
                 <div>
                   <p className="font-medium text-gray-700">Size:</p>
-                  <p className="text-gray-900">{selectedConcession.size} hectares</p>
+                  <p className="text-gray-900">{selectedConcession.size} acres</p>
                 </div>
                 <div>
-                  <p className="font-medium text-gray-700">Owner:</p>
+                  <p className="font-medium text-gray-700">Contact Person:</p>
                   <p className="text-gray-900">{selectedConcession.owner}</p>
                 </div>
                 <div>
-                  <p className="font-medium text-gray-700">Permit Type:</p>
-                  <p className="text-gray-900 capitalize">{selectedConcession.permitType.replace('-', ' ')}</p>
+                  <p className="font-medium text-gray-700">License Type:</p>
+                  <p className="text-gray-900 capitalize">{selectedConcession.permitType}</p>
                 </div>
                 <div>
                   <p className="font-medium text-gray-700">Expiry Date:</p>
                   <p className="text-gray-900">{new Date(selectedConcession.permitExpiryDate).toLocaleDateString()}</p>
                 </div>
                 <div>
-                  <p className="font-medium text-gray-700">Status:</p>
+                  <p className="font-medium text-gray-700">License Status:</p>
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(selectedConcession.status)}`}>
                     {selectedConcession.status}
                   </span>

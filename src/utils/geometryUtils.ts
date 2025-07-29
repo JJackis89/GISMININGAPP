@@ -5,6 +5,22 @@
 
 import { MiningConcession } from '../types'
 
+/**
+ * Convert hectares to acres
+ * 1 hectare = 2.47105 acres
+ */
+export const hectaresToAcres = (hectares: number): number => {
+  return hectares * 2.47105
+}
+
+/**
+ * Convert acres to hectares  
+ * 1 acre = 0.404686 hectares
+ */
+export const acresToHectares = (acres: number): number => {
+  return acres * 0.404686
+}
+
 export interface BoundaryVertex {
   latitude: number
   longitude: number
@@ -16,7 +32,7 @@ export interface BoundaryVertex {
 export interface BoundaryGeometry {
   vertices: BoundaryVertex[]
   perimeter: number // in kilometers
-  area: number // in hectares
+  area: number // in acres (converted from hectares)
   centroid: { latitude: number; longitude: number }
   boundingBox: {
     north: number
@@ -121,7 +137,7 @@ export const calculatePerimeter = (vertices: BoundaryVertex[]): number => {
 
 /**
  * Calculate area using Shoelace formula
- * Returns area in hectares
+ * Returns area in acres
  */
 export const calculateArea = (vertices: BoundaryVertex[]): number => {
   if (vertices.length < 3) return 0
@@ -141,8 +157,9 @@ export const calculateArea = (vertices: BoundaryVertex[]): number => {
   // 1 degree ≈ 111.32 km at equator, Ghana is near equator
   const kmSquared = area * 111.32 * 111.32
   
-  // Convert to hectares (1 km² = 100 hectares)
-  return Math.round(kmSquared * 100)
+  // Convert to hectares (1 km² = 100 hectares), then to acres
+  const hectares = kmSquared * 100
+  return Math.round(hectaresToAcres(hectares))
 }
 
 /**
@@ -236,10 +253,11 @@ export const formatCoordinates = {
 export const generateRealisticBoundary = (
   centerLat: number,
   centerLon: number,
-  sizeHectares: number,
+  sizeAcres: number,
   sides: number = 8
 ): [number, number][] => {
-  // Convert hectares to approximate radius in degrees
+  // Convert acres to hectares for existing calculation, then to approximate radius in degrees
+  const sizeHectares = acresToHectares(sizeAcres)
   const areaKm2 = sizeHectares / 100
   const radiusKm = Math.sqrt(areaKm2 / Math.PI)
   const radiusDeg = radiusKm / 111.32 // Approximate conversion

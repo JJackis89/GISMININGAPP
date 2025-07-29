@@ -127,7 +127,7 @@ const PrintTestPage: React.FC = () => {
               <p><strong>Data Source:</strong> {useArcGIS ? 'ArcGIS Feature Layer' : 'Mock Data'}</p>
               <p><strong>Test Concession:</strong> {testConcession.name}</p>
               <p><strong>Boundary Vertices:</strong> {boundaryGeometry.vertices.length}</p>
-              <p><strong>Calculated Area:</strong> {boundaryGeometry.area} hectares</p>
+              <p><strong>Calculated Area:</strong> {boundaryGeometry.area} acres</p>
               <p><strong>Perimeter:</strong> {boundaryGeometry.perimeter.toFixed(2)} km</p>
               <p><strong>Region:</strong> {testConcession.region}</p>
               {boundaryGeometry.vertices.length > 0 && (

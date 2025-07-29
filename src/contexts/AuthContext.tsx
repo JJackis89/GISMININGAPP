@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { firebaseAuth } from '../lib/firebase-auth'
 import { localAuth } from '../lib/local-auth'
-import { User } from '../types'
+import { User, ROLE_PERMISSIONS, RolePermissions, UserRole } from '../types'
 
 interface AuthContextType {
   user: User | null
@@ -11,6 +11,11 @@ interface AuthContextType {
   logout: () => Promise<void>
   isUsingFirebase: boolean
   isUsingLocal: boolean
+  hasPermission: (permission: keyof RolePermissions) => boolean
+  updateUserRole: (userId: string, newRole: UserRole) => Promise<{ success: boolean; error?: string }>
+  getAllUsers: () => Promise<User[]>
+  toggleUserStatus: (userId: string) => Promise<{ success: boolean; error?: string }>
+  createUser: (email: string, password: string, fullName: string, role: UserRole, department?: string) => Promise<{ success: boolean; error?: string }>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -195,6 +200,95 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }
 
+  const hasPermission = (permission: keyof RolePermissions): boolean => {
+    if (!user) return false
+    return ROLE_PERMISSIONS[user.role][permission]
+  }
+
+  const updateUserRole = async (userId: string, newRole: UserRole): Promise<{ success: boolean; error?: string }> => {
+    try {
+      if (isUsingFirebase) {
+        // In Firebase implementation, you would need to use Firestore to store user roles
+        // For now, we'll return an error since Firebase doesn't have built-in user management
+        return { success: false, error: 'User role management not yet implemented for Firebase' }
+      } else {
+        // Use local auth system
+        const allUsers = localAuth.getAllUsers()
+        const userExists = allUsers.find(u => u.id === userId)
+        
+        if (!userExists) {
+          return { success: false, error: 'User not found' }
+        }
+        
+        // Update user in local auth system
+        const success = localAuth.updateUserRole(userId, newRole)
+        
+        if (success && user && user.id === userId) {
+          // Update current user state if we're updating the current user
+          const updatedUser = { ...user, role: newRole, updated_at: new Date().toISOString() }
+          setUser(updatedUser)
+        }
+        
+        return { success, error: success ? undefined : 'Failed to update user role' }
+      }
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Failed to update user role' }
+    }
+  }
+
+  const getAllUsers = async (): Promise<User[]> => {
+    try {
+      if (isUsingFirebase) {
+        // In Firebase implementation, you would query Firestore for user data
+        // For now, return empty array since Firebase doesn't have built-in user listing
+        return []
+      } else {
+        // Use local auth system
+        return localAuth.getAllUsers()
+      }
+    } catch (error) {
+      console.error('Error getting all users:', error)
+      return []
+    }
+  }
+
+  const toggleUserStatus = async (userId: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      if (isUsingFirebase) {
+        return { success: false, error: 'User status management not yet implemented for Firebase' }
+      } else {
+        const success = localAuth.toggleUserStatus(userId)
+        return { success, error: success ? undefined : 'Failed to toggle user status' }
+      }
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Failed to toggle user status' }
+    }
+  }
+
+  const createUser = async (email: string, password: string, fullName: string, role: UserRole, department?: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      if (isUsingFirebase) {
+        // Create user in Firebase Auth
+        const result = await firebaseAuth.signUp(email, password, fullName)
+        if (result.success) {
+          // In a real app, you'd also save role and department to Firestore
+          return { success: true }
+        } else {
+          return { success: false, error: result.error }
+        }
+      } else {
+        // Use local auth system
+        const success = localAuth.addUser(email, password, fullName, role, department)
+        return { 
+          success, 
+          error: success ? undefined : 'User with this email already exists or creation failed' 
+        }
+      }
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Failed to create user' }
+    }
+  }
+
   const value: AuthContextType = {
     user,
     loading,
@@ -202,7 +296,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     signUp,
     logout,
     isUsingFirebase,
-    isUsingLocal
+    isUsingLocal,
+    hasPermission,
+    updateUserRole,
+    getAllUsers,
+    toggleUserStatus,
+    createUser
   }
 
   return (
@@ -219,5 +318,3 @@ export function useAuth() {
   }
   return context
 }
-
-export { AuthContext }

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Hosted Layer Fields</title>
+</head>
+<body>
+    <h1>EPA Mining Concessions - Field Debug</h1>
+    <button onclick="fetchFields()">Fetch Fields from Hosted Layer</button>
+    <div id="results"></div>
+
+    <script>
+        async function fetchFields() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<p>Fetching field information...</p>';
+            
+            try {
+                // First get the service metadata to see field definitions
+                const metadataResponse = await fetch('https://services6.arcgis.com/fHUAmeNg4xEGo0jq/arcgis/rest/services/GHANAEPAMINING/FeatureServer/0?f=json');
+                const metadata = await metadataResponse.json();
+                
+                // Then get actual data
+                const dataResponse = await fetch('https://services6.arcgis.com/fHUAmeNg4xEGo0jq/arcgis/rest/services/GHANAEPAMINING/FeatureServer/0/query?where=1%3D1&outFields=*&f=json&resultRecordCount=3');
+                const data = await dataResponse.json();
+                
+                let output = '<h2>✅ Field Definitions from Service:</h2>';
+                if (metadata.fields) {
+                    output += '<table border="1" style="border-collapse: collapse;"><tr><th>Field Name</th><th>Type</th><th>Domain</th></tr>';
+                    metadata.fields.forEach(field => {
+                        const domain = field.domain ? JSON.stringify(field.domain, null, 2) : 'None';
+                        output += `<tr><td><strong>${field.name}</strong></td><td>${field.type}</td><td><pre style="font-size: 10px;">${domain}</pre></td></tr>`;
+                    });
+                    output += '</table>';
+                }
+                
+                if (data.features && data.features.length > 0) {
+                    output += '<h2>Sample Records from Hosted Layer:</h2>';
+                    data.features.forEach((feature, index) => {
+                        output += `<h3>Record ${index + 1}:</h3>`;
+                        output += '<table border="1" style="border-collapse: collapse;"><tr><th>Field</th><th>Value</th></tr>';
+                        Object.entries(feature.attributes).forEach(([key, value]) => {
+                            output += `<tr><td><strong>${key}</strong></td><td>${value}</td></tr>`;
+                        });
+                        output += '</table><br>';
+                    });
+                } else {
+                    output += '<h2>❌ No data found</h2>';
+                }
+                
+                resultsDiv.innerHTML = output;
+                
+            } catch (error) {
+                resultsDiv.innerHTML = `<h2>❌ Error: ${error.message}</h2>`;
+            }
+        }
+    </script>
+</body>
+</html>

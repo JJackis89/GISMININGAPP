@@ -42,7 +42,7 @@ export default function StatsCards({ stats }: StatsCardsProps) {
       textColor: 'text-epa-orange-600'
     },
     {
-      title: 'Total Area (ha)',
+      title: 'Total Area (acres)',
       value: stats.totalAreaCovered.toLocaleString(),
       icon: Square,
       color: 'bg-purple-500',

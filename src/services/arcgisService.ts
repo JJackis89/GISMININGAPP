@@ -238,7 +238,7 @@ export class ArcGISService {
           }
           const boundaryGeometry = processConcessionBoundary(tempConcession as MiningConcession)
           calculatedSize = boundaryGeometry.area
-          console.log(`Calculated area from geometry: ${calculatedSize} hectares`)
+          console.log(`Calculated area from geometry: ${calculatedSize} acres`)
         } catch (geometryError) {
           console.warn('Failed to calculate area from geometry:', geometryError)
           calculatedSize = Math.round(Math.random() * 300 + 50) // Fallback
@@ -399,16 +399,18 @@ export class ArcGISService {
     return 'large-scale' // default
   }
 
-  private normalizeStatus(status: string): 'active' | 'expired' | 'pending' {
+  private normalizeStatus(status: string): string {
     const statusStr = status?.toLowerCase() || ''
     if (statusStr.includes('active') || statusStr.includes('valid')) {
-      return 'active'
+      return 'Active'
     } else if (statusStr.includes('expired') || statusStr.includes('inactive')) {
-      return 'expired'
+      return 'Expired'
+    } else if (statusStr.includes('suspended')) {
+      return 'Suspended'
     } else if (statusStr.includes('pending') || statusStr.includes('review')) {
-      return 'pending'
+      return 'Under Review'
     }
-    return 'active' // default
+    return 'Active' // default
   }
 
   private formatDate(dateValue: any): string {
@@ -432,7 +434,7 @@ export class ArcGISService {
 
 export function calculateStatsFromConcessions(concessions: MiningConcession[]): DashboardStats {
   const totalConcessions = concessions.length
-  const activeConcessions = concessions.filter(c => c.status === 'active').length
+  const activeConcessions = concessions.filter(c => c.status === 'Active').length
   const totalArea = concessions.reduce((sum, c) => sum + c.size, 0)
   
   // Calculate expiring soon (within 6 months)
@@ -440,7 +442,7 @@ export function calculateStatsFromConcessions(concessions: MiningConcession[]): 
   sixMonthsFromNow.setMonth(sixMonthsFromNow.getMonth() + 6)
   const expiringSoon = concessions.filter(c => {
     const expiryDate = new Date(c.permitExpiryDate)
-    return expiryDate <= sixMonthsFromNow && c.status === 'active'
+    return expiryDate <= sixMonthsFromNow && c.status === 'Active'
   }).length
 
   // Calculate by region
@@ -449,16 +451,18 @@ export function calculateStatsFromConcessions(concessions: MiningConcession[]): 
     return acc
   }, {} as Record<string, number>)
 
-  // Calculate by permit type
+  // Calculate by permit type - exclude null/invalid values
   const typeStats = concessions.reduce((acc, c) => {
-    acc[c.permitType] = (acc[c.permitType] || 0) + 1
+    if (c.permitType && c.permitType !== 'Not Specified' && c.permitType !== 'null' && c.permitType !== '') {
+      acc[c.permitType] = (acc[c.permitType] || 0) + 1
+    }
     return acc
   }, {} as Record<string, number>)
 
   return {
     totalConcessions,
     activePermits: activeConcessions,
-    expiredPermits: concessions.filter(c => c.status === 'expired').length,
+    expiredPermits: concessions.filter(c => c.status === 'Expired').length,
     soonToExpire: expiringSoon,
     totalAreaCovered: Math.round(totalArea * 10) / 10,
     concessionsByRegion: regionStats,

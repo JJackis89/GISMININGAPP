@@ -1,5 +1,8 @@
 import WebMap from '@arcgis/core/WebMap'
+import FeatureLayer from '@arcgis/core/layers/FeatureLayer'
 import { MiningConcession, DashboardStats } from '../types'
+import { arcgisConfig } from '../config/arcgisConfig'
+import { hectaresToAcres } from '../utils/geometryUtils'
 
 class MiningDataService {
   private webMap: any = null
@@ -9,13 +12,43 @@ class MiningDataService {
   private readonly CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
 
   /**
-   * Initialize the service with ArcGIS web map
+   * Initialize the service with ArcGIS feature service or web map
    */
   async initialize(): Promise<void> {
+    // Skip if already initialized
+    if (this.featureLayer) {
+      console.log('🔄 Service already initialized, skipping...')
+      return
+    }
+
     try {
+      // Try direct feature service first (preferred method)
+      if (arcgisConfig.featureServiceUrls?.miningConcessions) {
+        console.log('🔄 Initializing with direct feature service...')
+        console.log('📍 Feature service URL:', arcgisConfig.featureServiceUrls.miningConcessions)
+        
+        this.featureLayer = new FeatureLayer({
+          url: arcgisConfig.featureServiceUrls.miningConcessions,
+          outFields: ['*']
+        })
+
+        console.log('⏳ Loading feature layer...')
+        await this.featureLayer.load()
+        console.log('✅ Mining data service initialized with feature service:', this.featureLayer.title || 'Mining Concessions')
+        console.log('📊 Layer details:', {
+          id: this.featureLayer.id,
+          url: this.featureLayer.url,
+          geometryType: this.featureLayer.geometryType,
+          capabilities: this.featureLayer.capabilities
+        })
+        return
+      }
+
+      // Fallback to web map
+      console.log('🔄 Initializing with web map...')
       this.webMap = new WebMap({
         portalItem: {
-          id: 'b7d490ce18644f9c8f38989586c4d0d4'
+          id: arcgisConfig.primaryWebMapId
         }
       })
 
@@ -33,7 +66,7 @@ class MiningDataService {
       }
 
       await this.featureLayer.load()
-      console.log('✅ Mining data service initialized with layer:', this.featureLayer.title)
+      console.log('✅ Mining data service initialized with web map layer:', this.featureLayer.title)
     } catch (error) {
       console.error('❌ Failed to initialize mining data service:', error)
       throw error
@@ -56,11 +89,31 @@ class MiningDataService {
     }
 
     try {
+      console.log('🔄 Creating query for feature layer...')
       const query = this.featureLayer.createQuery()
       query.returnGeometry = true
       query.outFields = ['*']
       
+      console.log('🔄 Executing query...')
       const featureSet = await this.featureLayer.queryFeatures(query)
+      
+      console.log(`📊 Raw feature set results:`, {
+        featureCount: featureSet.features.length,
+        spatialReference: featureSet.spatialReference,
+        exceededTransferLimit: featureSet.exceededTransferLimit
+      })
+
+      if (featureSet.features.length === 0) {
+        console.warn('⚠️ No features returned from query')
+        this.cachedData = []
+        this.lastFetch = now
+        return this.cachedData
+      }
+
+      // Log sample feature for debugging
+      const sampleFeature = featureSet.features[0]
+      console.log('📝 Sample feature attributes:', sampleFeature.attributes)
+      console.log('📍 Sample feature geometry type:', sampleFeature.geometry?.type)
       
       this.cachedData = featureSet.features.map((feature: any, index: number) => {
         const attributes = feature.attributes
@@ -72,22 +125,61 @@ class MiningDataService {
           coordinates.push(...geometry.rings[0].map((point: number[]) => [point[0], point[1]] as [number, number]))
         }
 
-        // Map ArcGIS attributes to our interface
+        // Map ArcGIS attributes to our interface using field mappings
+        const mappings = arcgisConfig.fieldMappings
+
+        // Debug: Log actual field values for license type
+        const rawLicenseType = this.getFieldValue(attributes, mappings.permitType)
+        if (index < 3) { // Only log first 3 records to avoid spam
+          console.log(`🔍 Record ${index + 1} - Raw LicenseType value:`, rawLicenseType)
+          console.log(`🔍 Record ${index + 1} - All attributes:`, Object.keys(attributes))
+          console.log(`🔍 Record ${index + 1} - Trying these field names for permitType:`, mappings.permitType)
+          
+          // Show what specific attribute values exist for permitType fields
+          mappings.permitType.forEach(fieldName => {
+            if (attributes[fieldName] !== undefined) {
+              console.log(`🔍 Record ${index + 1} - Found ${fieldName}:`, attributes[fieldName])
+            }
+          })
+        }
+        
+        const decodedPermitType = this.decodeLicenseType(rawLicenseType)
+        if (index < 3) {
+          console.log(`🔍 Record ${index + 1} - Decoded permitType:`, decodedPermitType)
+        }
+
+        // Extract area from hosted layer - if no valid area, use 0 (don't generate fake data)
+        const rawSize = this.getFieldValue(attributes, mappings.size)
+        let calculatedSize = 0
+        
+        if (rawSize && typeof rawSize === 'number' && rawSize > 0) {
+          // If size is in square meters, convert to acres
+          if (rawSize > 10000) { // Likely square meters if large number
+            calculatedSize = this.convertSizeToAcres(rawSize)
+          } else {
+            // Likely already in acres if small number
+            calculatedSize = Math.round(rawSize)
+          }
+        } else if (geometry && geometry.rings && geometry.rings[0]) {
+          // Calculate area from geometry if no size field available
+          calculatedSize = this.calculatePolygonArea(geometry.rings[0])
+        }
+
         return {
-          id: attributes.OBJECTID?.toString() || `MC${(index + 1).toString().padStart(3, '0')}`,
-          name: attributes.Name || attributes.CONCESSION_NAME || attributes.PERMIT_NAME || `Concession ${index + 1}`,
-          size: attributes.AREA_HA || attributes.SIZE_HECTARES || attributes.AREA || Math.round(Math.random() * 500 + 50),
-          owner: attributes.OWNER || attributes.COMPANY || attributes.PERMIT_HOLDER || 'Unknown Owner',
-          permitType: this.mapPermitType(attributes.PERMIT_TYPE || attributes.TYPE || attributes.SCALE),
-          permitExpiryDate: this.formatDate(attributes.EXPIRY_DATE || attributes.PERMIT_EXPIRY || '2025-12-31'),
-          district: attributes.DISTRICT || attributes.DIST_NAME || this.extractDistrict(attributes),
-          region: attributes.REGION || attributes.REG_NAME || this.extractRegion(attributes, coordinates),
-          status: this.mapStatus(attributes.STATUS || attributes.PERMIT_STATUS),
+          id: this.getFieldValue(attributes, mappings.id) || `MC${(index + 1).toString().padStart(3, '0')}`,
+          name: this.getFieldValue(attributes, mappings.name) || `Concession ${index + 1}`,
+          size: calculatedSize,
+          owner: this.getFieldValue(attributes, mappings.owner) || 'Not Specified',
+          permitType: decodedPermitType,
+          permitExpiryDate: this.formatDate(this.getFieldValue(attributes, mappings.expiryDate)),
+          district: this.getFieldValue(attributes, mappings.district) || this.extractDistrict(attributes),
+          region: this.getFieldValue(attributes, mappings.region) || this.extractRegion(attributes, coordinates),
+          status: this.decodeLicenseStatus(this.getFieldValue(attributes, mappings.status)),
           coordinates,
           contactInfo: {
-            phone: attributes.PHONE || attributes.CONTACT_PHONE,
-            email: attributes.EMAIL || attributes.CONTACT_EMAIL,
-            address: attributes.ADDRESS || attributes.CONTACT_ADDRESS
+            phone: this.getFieldValue(attributes, ['ContactNumber']) || this.getFieldValue(attributes, mappings.phone),
+            email: this.getFieldValue(attributes, mappings.email),
+            address: this.getFieldValue(attributes, mappings.address)
           }
         } as MiningConcession
       })
@@ -142,8 +234,8 @@ class MiningDataService {
     
     const stats: DashboardStats = {
       totalConcessions: concessions.length,
-      activePermits: concessions.filter(c => c.status === 'active').length,
-      expiredPermits: concessions.filter(c => c.status === 'expired').length,
+      activePermits: concessions.filter(c => c.status === 'Active').length,
+      expiredPermits: concessions.filter(c => c.status === 'Expired').length,
       soonToExpire: concessions.filter(c => {
         const expiryDate = new Date(c.permitExpiryDate)
         const threeMonthsFromNow = new Date()
@@ -177,12 +269,99 @@ class MiningDataService {
   }
 
   /**
+   * Helper method to get field value using field mappings
+   */
+  private getFieldValue(attributes: any, fieldMappings: string[]): any {
+    if (!fieldMappings || fieldMappings.length === 0) return null
+
+    // Try each field mapping until we find a value
+    for (const fieldName of fieldMappings) {
+      if (attributes[fieldName] !== undefined && attributes[fieldName] !== null) {
+        return attributes[fieldName]
+      }
+    }
+    return null
+  }
+
+  /**
+   * Decode LicenseStatus from hosted layer coded values
+   */
+  private decodeLicenseStatus(code: string | number): string {
+    const codeStr = String(code)
+    switch (codeStr) {
+      case '1': return 'Active'        // Active
+      case '2': return 'Suspended'     // Suspended 
+      case '3': return 'Expired'       // Expired
+      case '4': return 'Under Review'  // Under Review
+      default: 
+        // Fallback to text-based mapping for non-coded values
+        return this.mapStatus(codeStr)
+    }
+  }
+
+  /**
+   * Decode LicenseType from hosted layer coded values to actual text values
+   */
+  private decodeLicenseType(code: string | number | null | undefined): string {
+    if (code === null || code === undefined || code === '') {
+      return 'Not Specified'
+    }
+    
+    const codeStr = String(code)
+    switch (codeStr) {
+      case '1': return 'Reconnaissance'    // Reconnaissance
+      case '2': return 'Prospecting'       // Prospecting
+      case '3': return 'Mining Lease'      // Mining Lease
+      case '4': return 'Small Scale'       // Small Scale
+      default:
+        // For non-coded values, return the actual text value or 'Not Specified'
+        if (codeStr && codeStr !== 'null' && codeStr !== 'undefined') {
+          return codeStr
+        }
+        return 'Not Specified'
+    }
+  }
+
+  /**
+   * Convert size from square meters to acres (hosted layer uses square meters)
+   */
+  private convertSizeToAcres(sizeInSquareMeters: number): number {
+    // 1 square meter = 0.000247105 acres
+    return Math.round(sizeInSquareMeters * 0.000247105)
+  }
+
+  /**
+   * Calculate polygon area from coordinates and convert to acres
+   */
+  private calculatePolygonArea(coordinates: number[][]): number {
+    if (!coordinates || coordinates.length < 3) return 0
+    
+    // Simple polygon area calculation using shoelace formula
+    let area = 0
+    const n = coordinates.length
+    
+    for (let i = 0; i < n; i++) {
+      const j = (i + 1) % n
+      area += coordinates[i][0] * coordinates[j][1]
+      area -= coordinates[j][0] * coordinates[i][1]
+    }
+    
+    // Convert from coordinate units to square meters (approximate)
+    // This is a rough approximation - for precise calculations you'd need to account for projection
+    area = Math.abs(area) / 2
+    
+    // Convert square meters to acres and round
+    return Math.round(area * 111000 * 111000 * 0.000247105) // Rough lat/lon to meters conversion
+  }
+
+  /**
    * Map permit type from various possible values
    */
   private mapPermitType(value: string): 'small-scale' | 'large-scale' {
     if (!value) return 'small-scale'
     const lower = value.toLowerCase()
-    if (lower.includes('large') || lower.includes('major') || lower.includes('commercial')) {
+    if (lower.includes('large') || lower.includes('major') || lower.includes('commercial') || 
+        lower.includes('reconnaissance') || lower.includes('prospecting') || lower.includes('lease')) {
       return 'large-scale'
     }
     return 'small-scale'
@@ -191,23 +370,26 @@ class MiningDataService {
   /**
    * Map status from various possible values
    */
-  private mapStatus(value: string): 'active' | 'expired' | 'pending' {
-    if (!value) return 'active'
+  private mapStatus(value: string): string {
+    if (!value) return 'Active'
     const lower = value.toLowerCase()
     if (lower.includes('expired') || lower.includes('inactive')) {
-      return 'expired'
+      return 'Expired'
+    }
+    if (lower.includes('suspended')) {
+      return 'Suspended'
     }
     if (lower.includes('pending') || lower.includes('review')) {
-      return 'pending'
+      return 'Under Review'
     }
-    return 'active'
+    return 'Active'
   }
 
   /**
    * Format date string
    */
   private formatDate(dateValue: any): string {
-    if (!dateValue) return '2025-12-31'
+    if (!dateValue) return 'Not Specified'
     if (typeof dateValue === 'number') {
       return new Date(dateValue).toISOString().split('T')[0]
     }
@@ -217,7 +399,7 @@ class MiningDataService {
         return date.toISOString().split('T')[0]
       }
     }
-    return '2025-12-31'
+    return 'Not Specified'
   }
 
   /**
@@ -264,6 +446,21 @@ class MiningDataService {
   }
 
   /**
+   * Refresh data and notify all components
+   */
+  async refreshAndNotify(): Promise<void> {
+    console.log('🔄 Refreshing mining data and notifying components...')
+    this.clearCache()
+    
+    try {
+      await this.getMiningConcessions(true)
+      console.log('✅ Data refreshed successfully')
+    } catch (error) {
+      console.error('❌ Error refreshing data:', error)
+    }
+  }
+
+  /**
    * Export concessions data to CSV format
    */
   exportToCSV(concessions: MiningConcession[]): string {
@@ -271,7 +468,7 @@ class MiningDataService {
       'ID',
       'Name', 
       'Owner',
-      'Size (hectares)',
+      'Size (acres)',
       'Permit Type',
       'Status',
       'Region',

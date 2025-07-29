@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import ChartsSection from '../components/Charts/ChartsSection'
 import StatsCards from '../components/Charts/StatsCards'
+import RefreshButton from '../components/ui/RefreshButton'
 import { DashboardStats } from '../types'
 import miningDataService from '../services/miningDataService'
+import { dataRefreshService } from '../services/dataRefreshService'
 import { BarChart, TrendingUp, PieChart, Activity } from 'lucide-react'
 
 export default function AnalyticsPage() {
@@ -46,7 +48,22 @@ export default function AnalyticsPage() {
       }
     }
 
+    // Register refresh callback with the data refresh service
+    const refreshCallback = () => {
+      console.log('🔄 AnalyticsPage: Refreshing data due to external change...')
+      loadData()
+    }
+
+    // Register the callback
+    dataRefreshService.registerRefreshCallback(refreshCallback)
+
+    // Initial load
     loadData()
+
+    // Cleanup: unregister callback when component unmounts
+    return () => {
+      dataRefreshService.unregisterRefreshCallback(refreshCallback)
+    }
   }, [])
 
   if (loading) {
@@ -67,6 +84,7 @@ export default function AnalyticsPage() {
           <h1 className="text-2xl font-bold text-epa-orange-900">Analytics & Insights</h1>
           <p className="text-gray-600">Comprehensive analysis of mining concession data</p>
         </div>
+        <RefreshButton />
       </div>
 
       {/* Key Metrics */}
@@ -78,7 +96,7 @@ export default function AnalyticsPage() {
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Total Area</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.totalAreaCovered.toLocaleString()} ha</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.totalAreaCovered.toLocaleString()} acres</p>
             </div>
           </div>
         </div>

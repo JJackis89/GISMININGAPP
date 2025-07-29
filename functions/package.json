@@ -1,0 +1,26 @@
+{
+  "name": "epa-mining-alerts",
+  "version": "1.0.0",
+  "description": "Cloud Function for EPA Mining Permit Expiry Alerts",
+  "main": "index.js",
+  "scripts": {
+    "start": "functions-framework --target=sendPermitAlerts",
+    "setup": "node setup.js",
+    "test": "node test.js",
+    "deploy": "gcloud functions deploy sendPermitAlerts --runtime nodejs18 --trigger-topic permit-alerts-scheduler --entry-point sendPermitAlerts",
+    "deploy-win": "powershell -ExecutionPolicy Bypass -File deploy.ps1",
+    "logs": "gcloud functions logs read sendPermitAlerts --limit=50"
+  },
+  "dependencies": {
+    "@google-cloud/functions-framework": "^3.3.0",
+    "nodemailer": "^6.9.7",
+    "node-fetch": "^2.7.0",
+    "date-fns": "^2.30.0"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0"
+  },
+  "engines": {
+    "node": "18"
+  }
+}

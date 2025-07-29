@@ -7,6 +7,9 @@ import MapViewPage from './pages/MapViewPage'
 import FiltersPage from './pages/FiltersPage'
 import AnalyticsPage from './pages/AnalyticsPage'
 import PrintTestPage from './pages/PrintTestPage'
+import AdminPage from './pages/AdminPage'
+import AdminTestPage from './pages/AdminTestPage'
+import ConcessionEdit from './pages/ConcessionEdit'
 import PrintVerification from './components/PrintVerification'
 
 function App() {
@@ -39,6 +42,9 @@ function App() {
             <Route path="/map-view" element={<MapViewPage />} />
             <Route path="/filters" element={<FiltersPage />} />
             <Route path="/analytics" element={<AnalyticsPage />} />
+            <Route path="/edit" element={<ConcessionEdit />} />
+            <Route path="/admin" element={<AdminPage />} />
+            <Route path="/admin-test" element={<AdminTestPage />} />
             <Route path="/print-test" element={<PrintTestPage />} />
             <Route path="/print-verify" element={<PrintVerification />} />
             <Route path="*" element={<Navigate to="/" replace />} />

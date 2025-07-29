@@ -280,7 +280,7 @@ export class PrintService {
             </div>
             <div class="detail-row">
               <span class="detail-label">Size:</span>
-              <span class="detail-value">${boundaryGeometry.area.toLocaleString()} hectares</span>
+              <span class="detail-value">${boundaryGeometry.area.toLocaleString()} acres</span>
             </div>
             <div class="detail-row">
               <span class="detail-label">Type:</span>
@@ -318,7 +318,7 @@ export class PrintService {
           <div class="geometric-grid">
             <div class="geometric-item">
               <span class="geometric-label">Total Area:</span>
-              <span class="geometric-value">${boundaryGeometry.area.toLocaleString()} hectares</span>
+              <span class="geometric-value">${boundaryGeometry.area.toLocaleString()} acres</span>
             </div>
             <div class="geometric-item">
               <span class="geometric-label">Perimeter:</span>
@@ -342,7 +342,7 @@ export class PrintService {
               <div class="map-placeholder">
                 📍 Concession Boundary Map<br/>
                 <strong>${concession.name}</strong><br/>
-                Area: ${boundaryGeometry.area.toLocaleString()} hectares<br/>
+                Area: ${boundaryGeometry.area.toLocaleString()} acres<br/>
                 ${boundaryGeometry.vertices.length} boundary points
               </div>
             </div>

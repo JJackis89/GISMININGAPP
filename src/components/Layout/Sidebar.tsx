@@ -1,11 +1,15 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { useAuth } from '../../contexts/AuthContext'
 import { 
   Map, 
   Filter, 
   BarChart3, 
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Settings,
+  Shield,
+  Edit3
 } from 'lucide-react'
 
 const menuItems = [
@@ -18,9 +22,23 @@ export default function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
+  const { hasPermission } = useAuth()
 
   const handleNavigation = (path: string) => {
     navigate(path)
+  }
+
+  // Add admin panel and editing to menu based on permissions
+  let allMenuItems = [...menuItems]
+  
+  // Add editing feature for users with edit permissions
+  if (hasPermission('canEditConcessions')) {
+    allMenuItems.push({ icon: Edit3, label: 'Edit Concessions', path: '/edit' })
+  }
+  
+  // Add admin panel for users with admin access
+  if (hasPermission('canAccessAdminPanel')) {
+    allMenuItems.push({ icon: Settings, label: 'Admin Panel', path: '/admin' })
   }
 
   return (
@@ -38,21 +56,39 @@ export default function Sidebar() {
         </div>
 
         <nav className="flex-1 p-4 space-y-2">
-          {menuItems.map((item) => {
+          {allMenuItems.map((item) => {
             const Icon = item.icon
             const isActive = location.pathname === item.path
+            const isAdminItem = item.path === '/admin'
+            const isEditItem = item.path === '/edit'
+            const isSpecialItem = isAdminItem || isEditItem
+            
             return (
               <button
                 key={item.path}
                 onClick={() => handleNavigation(item.path)}
                 className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors ${
                   isActive
-                    ? 'bg-epa-orange-50 text-epa-orange-700 border border-epa-orange-200'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    ? isAdminItem
+                      ? 'bg-red-50 text-red-700 border border-red-200'
+                      : isEditItem
+                        ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                        : 'bg-epa-orange-50 text-epa-orange-700 border border-epa-orange-200'
+                    : isAdminItem
+                      ? 'text-red-600 hover:bg-red-50 hover:text-red-700'
+                      : isEditItem
+                        ? 'text-blue-600 hover:bg-blue-50 hover:text-blue-700'
+                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                 }`}
               >
                 <Icon className="h-5 w-5 flex-shrink-0" />
-                {!isCollapsed && <span className="font-medium">{item.label}</span>}
+                {!isCollapsed && (
+                  <span className="font-medium flex items-center">
+                    {item.label}
+                    {isAdminItem && <Shield className="h-3 w-3 ml-1" />}
+                    {isEditItem && <Edit3 className="h-3 w-3 ml-1" />}
+                  </span>
+                )}
               </button>
             )
           })}

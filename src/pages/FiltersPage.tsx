@@ -238,8 +238,8 @@ export default function FiltersPage() {
               filters.status && `Status: ${filters.status}`,
               filters.type && `Type: ${filters.type.replace('-', ' ')}`,
               filters.expiryWindow && `Expiring in ${filters.expiryWindow} days`,
-              advancedFilters.sizeMin && `Min size: ${advancedFilters.sizeMin}ha`,
-              advancedFilters.sizeMax && `Max size: ${advancedFilters.sizeMax}ha`,
+              advancedFilters.sizeMin && `Min size: ${advancedFilters.sizeMin} acres`,
+              advancedFilters.sizeMax && `Max size: ${advancedFilters.sizeMax} acres`,
               advancedFilters.companySearch && `Concession: "${advancedFilters.companySearch}"`,
               advancedFilters.districtSearch && `District: "${advancedFilters.districtSearch}"`,
               (advancedFilters.permitDateFrom || advancedFilters.permitDateTo) && 'Date range applied'
@@ -265,7 +265,7 @@ export default function FiltersPage() {
               {/* Size Range */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Concession Size (Hectares)
+                  Concession Size (Acres)
                 </label>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -471,115 +471,109 @@ export default function FiltersPage() {
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
         <div className="p-4 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900">Quick Filter Presets</h2>
-          <p className="text-sm text-gray-600">Common filter combinations based on real data patterns</p>
+          <p className="text-sm text-gray-600">Common filter combinations based on actual EPA hosted layer data</p>
         </div>
         <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* Active concessions preset */}
+            {/* Active small-scale mining preset */}
             <div className="border border-gray-200 rounded-lg p-4 hover:border-green-500 cursor-pointer transition-colors"
                  onClick={() => {
                    // Clear all filters first, then apply preset
-                   setFilters({ region: '', status: 'active', type: '', expiryWindow: '' })
+                   setFilters({ region: '', status: 'Active', type: 'Small Scale', expiryWindow: '' })
                    setAdvancedFilters({
                      sizeMin: '', sizeMax: '', companySearch: '', districtSearch: '', 
                      permitDateFrom: '', permitDateTo: ''
                    })
                  }}>
-              <h3 className="font-medium text-gray-900">Active Concessions</h3>
-              <p className="text-sm text-gray-600 mt-1">All currently active mining permits</p>
+              <h3 className="font-medium text-gray-900">Active Small Scale Mining</h3>
+              <p className="text-sm text-gray-600 mt-1">All currently active small-scale permits</p>
               <p className="text-xs text-green-600 mt-2">
-                {concessions.filter(c => c.status === 'active').length} concessions
+                {concessions.filter(c => c.status === 'Active' && c.permitType === 'Small Scale').length} concessions
               </p>
             </div>
 
-            {/* Expiring soon preset */}
+            {/* Western Region mining preset */}
             <div className="border border-gray-200 rounded-lg p-4 hover:border-yellow-500 cursor-pointer transition-colors"
                  onClick={() => {
                    // Clear all filters first, then apply preset
-                   setFilters({ region: '', status: 'active', type: '', expiryWindow: '90' })
+                   setFilters({ region: 'Western', status: 'Active', type: '', expiryWindow: '' })
                    setAdvancedFilters({
                      sizeMin: '', sizeMax: '', companySearch: '', districtSearch: '', 
                      permitDateFrom: '', permitDateTo: ''
                    })
                  }}>
-              <h3 className="font-medium text-gray-900">Expiring in 90 Days</h3>
-              <p className="text-sm text-gray-600 mt-1">Active permits expiring soon</p>
+              <h3 className="font-medium text-gray-900">Western Region Active</h3>
+              <p className="text-sm text-gray-600 mt-1">Active permits in Western Region</p>
               <p className="text-xs text-yellow-600 mt-2">
-                {concessions.filter(c => {
-                  if (c.status !== 'active') return false
-                  const expiryDate = new Date(c.permitExpiryDate)
-                  const windowDate = new Date()
-                  windowDate.setDate(windowDate.getDate() + 90)
-                  return expiryDate <= windowDate
-                }).length} concessions
+                {concessions.filter(c => c.status === 'Active' && c.region === 'Western').length} concessions
               </p>
             </div>
 
-            {/* Large scale mines preset */}
+            {/* Central Region mining preset */}
             <div className="border border-gray-200 rounded-lg p-4 hover:border-blue-500 cursor-pointer transition-colors"
                  onClick={() => {
                    // Clear all filters first, then apply preset
-                   setFilters({ region: '', status: '', type: '', expiryWindow: '' })
+                   setFilters({ region: 'Central', status: 'Active', type: '', expiryWindow: '' })
                    setAdvancedFilters({
-                     sizeMin: '100', sizeMax: '', companySearch: '', districtSearch: '', 
+                     sizeMin: '', sizeMax: '', companySearch: '', districtSearch: '', 
                      permitDateFrom: '', permitDateTo: ''
                    })
                  }}>
-              <h3 className="font-medium text-gray-900">Large Scale Operations</h3>
-              <p className="text-sm text-gray-600 mt-1">Concessions over 100 hectares</p>
+              <h3 className="font-medium text-gray-900">Central Region Active</h3>
+              <p className="text-sm text-gray-600 mt-1">Active permits in Central Region</p>
               <p className="text-xs text-blue-600 mt-2">
-                {concessions.filter(c => c.size >= 100).length} concessions
+                {concessions.filter(c => c.status === 'Active' && c.region === 'Central').length} concessions
               </p>
             </div>
 
-            {/* Expired concessions preset */}
+            {/* Ashanti Region mining preset */}
             <div className="border border-gray-200 rounded-lg p-4 hover:border-red-500 cursor-pointer transition-colors"
                  onClick={() => {
                    // Clear all filters first, then apply preset
-                   setFilters({ region: '', status: 'expired', type: '', expiryWindow: '' })
+                   setFilters({ region: 'Ashanti', status: 'Active', type: '', expiryWindow: '' })
                    setAdvancedFilters({
                      sizeMin: '', sizeMax: '', companySearch: '', districtSearch: '', 
                      permitDateFrom: '', permitDateTo: ''
                    })
                  }}>
-              <h3 className="font-medium text-gray-900">Expired Permits</h3>
-              <p className="text-sm text-gray-600 mt-1">Concessions with expired permits</p>
+              <h3 className="font-medium text-gray-900">Ashanti Region Active</h3>
+              <p className="text-sm text-gray-600 mt-1">Active permits in Ashanti Region</p>
               <p className="text-xs text-red-600 mt-2">
-                {concessions.filter(c => c.status === 'expired').length} concessions
+                {concessions.filter(c => c.status === 'Active' && c.region === 'Ashanti').length} concessions
               </p>
             </div>
 
-            {/* Western Region preset */}
+            {/* Larger concessions preset (>400 hectares) */}
             <div className="border border-gray-200 rounded-lg p-4 hover:border-purple-500 cursor-pointer transition-colors"
                  onClick={() => {
                    // Clear all filters first, then apply preset
-                   setFilters({ region: 'Western', status: '', type: '', expiryWindow: '' })
+                   setFilters({ region: '', status: 'Active', type: '', expiryWindow: '' })
                    setAdvancedFilters({
-                     sizeMin: '', sizeMax: '', companySearch: '', districtSearch: '', 
+                     sizeMin: '400', sizeMax: '', companySearch: '', districtSearch: '', 
                      permitDateFrom: '', permitDateTo: ''
                    })
                  }}>
-              <h3 className="font-medium text-gray-900">Western Region</h3>
-              <p className="text-sm text-gray-600 mt-1">All concessions in Western Region</p>
+              <h3 className="font-medium text-gray-900">Large Area Permits</h3>
+              <p className="text-sm text-gray-600 mt-1">Concessions over 400 hectares</p>
               <p className="text-xs text-purple-600 mt-2">
-                {concessions.filter(c => c.region === 'Western').length} concessions
+                {concessions.filter(c => c.status === 'Active' && c.size >= 400).length} concessions
               </p>
             </div>
 
-            {/* Small scale operations preset */}
+            {/* Smaller concessions preset (<200 hectares) */}
             <div className="border border-gray-200 rounded-lg p-4 hover:border-indigo-500 cursor-pointer transition-colors"
                  onClick={() => {
                    // Clear all filters first, then apply preset
-                   setFilters({ region: '', status: '', type: '', expiryWindow: '' })
+                   setFilters({ region: '', status: 'Active', type: '', expiryWindow: '' })
                    setAdvancedFilters({
-                     sizeMin: '', sizeMax: '25', companySearch: '', districtSearch: '', 
+                     sizeMin: '', sizeMax: '200', companySearch: '', districtSearch: '', 
                      permitDateFrom: '', permitDateTo: ''
                    })
                  }}>
-              <h3 className="font-medium text-gray-900">Small Scale Operations</h3>
-              <p className="text-sm text-gray-600 mt-1">Concessions under 25 hectares</p>
+              <h3 className="font-medium text-gray-900">Small Area Permits</h3>
+              <p className="text-sm text-gray-600 mt-1">Concessions under 200 hectares</p>
               <p className="text-xs text-indigo-600 mt-2">
-                {concessions.filter(c => c.size <= 25).length} concessions
+                {concessions.filter(c => c.status === 'Active' && c.size <= 200).length} concessions
               </p>
             </div>
           </div>
@@ -609,7 +603,7 @@ export default function FiltersPage() {
                       </span>
                     </div>
                     <div className="text-sm text-gray-600 mt-1">
-                      {concession.owner} • {concession.district}, {concession.region} • {concession.size} ha
+                      {concession.owner} • {concession.district}, {concession.region} • {concession.size} acres
                     </div>
                   </div>
                   <div className="text-sm text-gray-500">

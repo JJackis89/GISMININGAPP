@@ -146,8 +146,8 @@ export function calculateStats(concessions: MiningConcession[]): DashboardStats 
   const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
 
   const totalConcessions = concessions.length
-  const activePermits = concessions.filter(c => c.status === 'active').length
-  const expiredPermits = concessions.filter(c => c.status === 'expired').length
+  const activePermits = concessions.filter(c => c.status === 'Active').length
+  const expiredPermits = concessions.filter(c => c.status === 'Expired').length
   const soonToExpire = concessions.filter(c => {
     const expiryDate = new Date(c.permitExpiryDate)
     return c.status === 'active' && expiryDate <= thirtyDaysFromNow && expiryDate >= now

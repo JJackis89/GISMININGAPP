@@ -174,10 +174,10 @@ export default function ReportsPage() {
   }
 
   const generateRegionalAnalysis = (concessions: MiningConcession[], stats: DashboardStats): string => {
-    const headers = ['Region', 'Total Concessions', 'Active Permits', 'Total Area (hectares)']
+    const headers = ['Region', 'Total Concessions', 'Active Permits', 'Total Area (acres)']
     const regionData = Object.entries(stats.concessionsByRegion).map(([region, count]) => {
       const regionConcessions = concessions.filter(c => c.region === region)
-      const activeCount = regionConcessions.filter(c => c.status === 'active').length
+      const activeCount = regionConcessions.filter(c => c.status === 'Active').length
       const totalArea = regionConcessions.reduce((sum, c) => sum + c.size, 0)
       return [region, count.toString(), activeCount.toString(), totalArea.toFixed(2)]
     })

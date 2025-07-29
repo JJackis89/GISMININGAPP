@@ -44,7 +44,7 @@ export const PrintDemo: React.FC = () => {
               <div className="text-sm text-gray-600 space-y-1">
                 <p><span className="font-medium">Owner:</span> {sampleConcession.owner}</p>
                 <p><span className="font-medium">Region:</span> {sampleConcession.region}</p>
-                <p><span className="font-medium">Size:</span> {sampleConcession.size} hectares</p>
+                <p><span className="font-medium">Size:</span> {sampleConcession.size} acres</p>
                 <p><span className="font-medium">Status:</span> 
                   <span className={`ml-1 px-2 py-1 text-xs rounded-full ${
                     sampleConcession.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'

@@ -8,6 +8,8 @@ import SearchBar from '../Search/SearchBar'
 import ExportTools from '../Export/ExportTools'
 import { MiningConcession, DashboardStats } from '../../types'
 import { arcgisService, calculateStatsFromConcessions } from '../../services/arcgisService'
+import { miningDataService } from '../../services/miningDataService'
+import { dataRefreshService } from '../../services/dataRefreshService'
 import { mockConcessions } from '../../data/mockData'
 
 export default function Dashboard() {
@@ -41,31 +43,18 @@ export default function Dashboard() {
         console.log('Loading concessions data...')
         
         // Use ArcGIS Feature Layer data to match the map
-        // This ensures consistency between dashboard and map data
-        const useArcGIS = true
+        // Use miningDataService for consistent hosted layer data
+        console.log('🔄 Dashboard: Loading real data from EPA hosted layer...')
         
-        if (useArcGIS) {
-          // Add timeout to prevent infinite loading
-          const timeoutPromise = new Promise<never>((_, reject) => {
-            setTimeout(() => reject(new Error('Request timeout')), 10000) // 10 second timeout
-          })
-          
-          const dataPromise = arcgisService.getConcessions()
-          const realConcessions = await Promise.race([dataPromise, timeoutPromise])
-          
-          console.log('Loaded concessions from ArcGIS:', realConcessions.length)
-          setConcessions(realConcessions)
-          setFilteredConcessions(realConcessions)
-          setStats(calculateStatsFromConcessions(realConcessions))
-        } else {
-          // Use reliable sample data
-          console.log('Using sample mining concession data for Ghana')
-          
-          setConcessions(mockConcessions)
-          setFilteredConcessions(mockConcessions)
-          setStats(calculateStatsFromConcessions(mockConcessions))
-          console.log('Sample data loaded successfully:', mockConcessions.length, 'concessions')
-        }
+        await miningDataService.initialize()
+        const realConcessions = await miningDataService.getMiningConcessions(true) // Force fresh data
+        
+        console.log(`✅ Dashboard: Loaded ${realConcessions.length} concessions from hosted layer`)
+        console.log('🔍 Dashboard: Sample concession data:', realConcessions.slice(0, 2))
+        
+        setConcessions(realConcessions)
+        setFilteredConcessions(realConcessions)
+        setStats(calculateStatsFromConcessions(realConcessions))
       } catch (err) {
         console.error('Error loading data:', err)
         setError('Failed to load mining concession data. Please check your connection.')
@@ -78,7 +67,22 @@ export default function Dashboard() {
       }
     }
 
+    // Register refresh callback with the data refresh service
+    const refreshCallback = () => {
+      console.log('🔄 Dashboard: Refreshing data due to external change...')
+      loadData()
+    }
+
+    // Register the callback
+    dataRefreshService.registerRefreshCallback(refreshCallback)
+
+    // Initial load
     loadData()
+
+    // Cleanup: unregister callback when component unmounts
+    return () => {
+      dataRefreshService.unregisterRefreshCallback(refreshCallback)
+    }
   }, [])
 
   useEffect(() => {

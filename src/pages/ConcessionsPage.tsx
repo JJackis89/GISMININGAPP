@@ -3,8 +3,10 @@ import ConcessionTable from '../components/Table/ConcessionTable'
 import SearchBar from '../components/Search/SearchBar'
 import FilterPanel from '../components/Filters/FilterPanel'
 import ExportTools from '../components/Export/ExportTools'
+import RefreshButton from '../components/ui/RefreshButton'
 import { MiningConcession } from '../types'
 import { miningDataService } from '../services/miningDataService'
+import { dataRefreshService } from '../services/dataRefreshService'
 
 export default function ConcessionsPage() {
   const [concessions, setConcessions] = useState<MiningConcession[]>([])
@@ -26,7 +28,7 @@ export default function ConcessionsPage() {
         
         // Initialize the data service and fetch real mining concessions
         await miningDataService.initialize()
-        const realData = await miningDataService.getMiningConcessions()
+        const realData = await miningDataService.getMiningConcessions(true) // Force refresh
         
         console.log(`✅ Loaded ${realData.length} real mining concessions for concessions view`)
         setConcessions(realData)
@@ -38,7 +40,22 @@ export default function ConcessionsPage() {
       }
     }
 
+    // Register refresh callback with the data refresh service
+    const refreshCallback = () => {
+      console.log('🔄 ConcessionsPage: Refreshing data due to external change...')
+      loadData()
+    }
+
+    // Register the callback
+    dataRefreshService.registerRefreshCallback(refreshCallback)
+
+    // Initial load
     loadData()
+
+    // Cleanup: unregister callback when component unmounts
+    return () => {
+      dataRefreshService.unregisterRefreshCallback(refreshCallback)
+    }
   }, [])
 
   // Apply filters
@@ -116,10 +133,15 @@ export default function ConcessionsPage() {
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h1 className="text-2xl font-bold text-epa-orange-900">Mining Concessions Database</h1>
-          <p className="text-gray-600 mt-2">
-            Comprehensive management of mining permits and concessions in Ghana - Real EPA Data
-          </p>
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-2xl font-bold text-epa-orange-900">Mining Concessions Database</h1>
+              <p className="text-gray-600 mt-2">
+                Comprehensive management of mining permits and concessions in Ghana - Real EPA Data
+              </p>
+            </div>
+            <RefreshButton />
+          </div>
           <div className="mt-4 p-3 bg-green-50 rounded border border-green-200">
             <div className="text-sm text-green-800">
               ✅ Real-time data • {concessions.length} concessions loaded • Last updated: {new Date().toLocaleString()}
