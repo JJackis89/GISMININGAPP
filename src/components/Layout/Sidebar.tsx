@@ -8,8 +8,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Settings,
-  Shield,
-  Edit3
+  Shield
 } from 'lucide-react'
 
 const menuItems = [
@@ -28,13 +27,8 @@ export default function Sidebar() {
     navigate(path)
   }
 
-  // Add admin panel and editing to menu based on permissions
+  // Add admin panel to menu based on permissions
   let allMenuItems = [...menuItems]
-  
-  // Add editing feature for users with edit permissions
-  if (hasPermission('canEditConcessions')) {
-    allMenuItems.push({ icon: Edit3, label: 'Edit Concessions', path: '/edit' })
-  }
   
   // Add admin panel for users with admin access
   if (hasPermission('canAccessAdminPanel')) {
@@ -60,8 +54,6 @@ export default function Sidebar() {
             const Icon = item.icon
             const isActive = location.pathname === item.path
             const isAdminItem = item.path === '/admin'
-            const isEditItem = item.path === '/edit'
-            const isSpecialItem = isAdminItem || isEditItem
             
             return (
               <button
@@ -71,14 +63,10 @@ export default function Sidebar() {
                   isActive
                     ? isAdminItem
                       ? 'bg-red-50 text-red-700 border border-red-200'
-                      : isEditItem
-                        ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                        : 'bg-epa-orange-50 text-epa-orange-700 border border-epa-orange-200'
+                      : 'bg-epa-orange-50 text-epa-orange-700 border border-epa-orange-200'
                     : isAdminItem
                       ? 'text-red-600 hover:bg-red-50 hover:text-red-700'
-                      : isEditItem
-                        ? 'text-blue-600 hover:bg-blue-50 hover:text-blue-700'
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                 }`}
               >
                 <Icon className="h-5 w-5 flex-shrink-0" />
@@ -86,7 +74,6 @@ export default function Sidebar() {
                   <span className="font-medium flex items-center">
                     {item.label}
                     {isAdminItem && <Shield className="h-3 w-3 ml-1" />}
-                    {isEditItem && <Edit3 className="h-3 w-3 ml-1" />}
                   </span>
                 )}
               </button>

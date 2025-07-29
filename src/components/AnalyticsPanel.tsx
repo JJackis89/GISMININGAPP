@@ -12,7 +12,7 @@ interface AnalyticsPanelProps {
 export default function AnalyticsPanel({ dataService, concessions }: AnalyticsPanelProps) {
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [loading, setLoading] = useState(false)
-  const [lastUpdate, setLastUpdate] = useState<Date>(new Date())
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
 
   useEffect(() => {
     // Always load fresh data from mining data service
@@ -247,7 +247,7 @@ export default function AnalyticsPanel({ dataService, concessions }: AnalyticsPa
           </div>
           <div className="mt-1">
             • Data source: EPA Mining Concessions (ArcGIS FeatureServer)
-            • Last updated: {lastUpdate.toLocaleString()}
+            • Last updated: {lastUpdate ? lastUpdate.toLocaleString() : 'Never'}
             • Auto-refresh: Enabled
             • Total concessions analyzed: {stats.totalConcessions}
           </div>

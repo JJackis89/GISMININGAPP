@@ -1,8 +1,11 @@
 import { Info } from 'lucide-react'
+import { useIsClient, safeWindow } from '../../utils/hydration-safe'
 
 export function DemoBanner() {
-  // Only show in deployment environments
-  const isDeployment = window.location.hostname !== 'localhost'
+  const isClient = useIsClient()
+  
+  // Only check hostname after hydration
+  const isDeployment = isClient && safeWindow.getHostname() !== 'localhost'
   
   if (!isDeployment) return null
   

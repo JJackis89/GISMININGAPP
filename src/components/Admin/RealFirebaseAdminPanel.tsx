@@ -15,7 +15,7 @@ export default function RealFirebaseAdminPanel() {
   const roles = [
     { value: 'admin', label: 'Administrator', description: 'Full system access, can manage all users and settings', color: 'purple' },
     { value: 'manager', label: 'Manager', description: 'Can manage mining concessions and supervise staff', color: 'blue' },
-    { value: 'staff', label: 'Staff', description: 'Can edit mining concessions and view reports', color: 'green' },
+    { value: 'staff', label: 'Staff', description: 'Standard access for daily operations', color: 'green' },
     { value: 'viewer', label: 'Viewer', description: 'Read-only access to mining data', color: 'gray' }
   ]
 

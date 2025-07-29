@@ -23,7 +23,7 @@ export default function FirebaseAdminPanel() {
   const roles = [
     { value: 'admin', label: 'Administrator', description: 'Full system access, can manage all users and settings' },
     { value: 'manager', label: 'Manager', description: 'Can manage mining concessions and supervise staff' },
-    { value: 'staff', label: 'Staff', description: 'Can edit mining concessions and view reports' },
+    { value: 'staff', label: 'Staff', description: 'Standard access for daily operations' },
     { value: 'viewer', label: 'Viewer', description: 'Read-only access to mining data' }
   ]
 

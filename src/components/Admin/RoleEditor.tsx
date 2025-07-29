@@ -53,16 +53,6 @@ const RoleEditor: React.FC<RoleEditorProps> = ({ className = '' }) => {
       description: 'Ability to print and export reports'
     },
     {
-      key: 'canEditConcessions',
-      label: 'Edit Concessions',
-      description: 'Modify mining concession data and attributes'
-    },
-    {
-      key: 'canDeleteConcessions',
-      label: 'Delete Concessions',
-      description: 'Remove concession records from the system'
-    },
-    {
       key: 'canExportData',
       label: 'Export Data',
       description: 'Export data in various formats (CSV, GeoJSON, etc.)'

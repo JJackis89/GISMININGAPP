@@ -20,9 +20,9 @@ console.log('🔍 Supabase config check:', {
 })
 
 // Determine if we're in production/deployment environment
-const isDeployment = typeof window !== 'undefined' && 
+const isDeployment = typeof window !== 'undefined' ? 
                     (window.location.hostname !== 'localhost' && 
-                     window.location.hostname !== '127.0.0.1')
+                     window.location.hostname !== '127.0.0.1') : false
 
 console.log('🌍 Environment check:', {
   hostname: typeof window !== 'undefined' ? window.location.hostname : 'server',

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react'
-import { concessionEditingService } from '../../services/concessionEditingService'
 import { miningDataService } from '../../services/miningDataService'
 import { MiningConcession } from '../../types'
 import { RefreshCw, Database, HardDrive, CheckCircle, AlertCircle } from 'lucide-react'
@@ -10,7 +9,6 @@ interface DataSourceDebugProps {
 
 export default function DataSourceDebug({ className = '' }: DataSourceDebugProps) {
   const [hostedLayerCount, setHostedLayerCount] = useState<number>(0)
-  const [editingServiceCount, setEditingServiceCount] = useState<number>(0)
   const [loading, setLoading] = useState(false)
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -24,10 +22,6 @@ export default function DataSourceDebug({ className = '' }: DataSourceDebugProps
       await miningDataService.initialize()
       const hostedData = await miningDataService.getMiningConcessions()
       setHostedLayerCount(hostedData.length)
-
-      // Get editing service data
-      const editingData = await concessionEditingService.getAllConcessions()
-      setEditingServiceCount(editingData.length)
 
       setLastRefresh(new Date())
     } catch (err: any) {
@@ -69,14 +63,6 @@ export default function DataSourceDebug({ className = '' }: DataSourceDebugProps
             <span className="text-gray-700">Hosted Layer:</span>
           </div>
           <span className="font-medium text-gray-900">{hostedLayerCount} concessions</span>
-        </div>
-
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <HardDrive className="w-4 h-4 text-green-600" />
-            <span className="text-gray-700">Editing Service:</span>
-          </div>
-          <span className="font-medium text-gray-900">{editingServiceCount} concessions</span>
         </div>
 
         {lastRefresh && (

@@ -18,8 +18,6 @@ export interface RolePermissions {
   canViewReports: boolean
   canPrintReports: boolean
   canManageUsers: boolean
-  canEditConcessions: boolean
-  canDeleteConcessions: boolean
   canExportData: boolean
   canAccessAdminPanel: boolean
 }
@@ -30,8 +28,6 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canViewReports: true,
     canPrintReports: true,
     canManageUsers: true,
-    canEditConcessions: true,
-    canDeleteConcessions: true,
     canExportData: true,
     canAccessAdminPanel: true
   },
@@ -40,8 +36,6 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canViewReports: true,
     canPrintReports: true,
     canManageUsers: false,
-    canEditConcessions: true,
-    canDeleteConcessions: false,
     canExportData: true,
     canAccessAdminPanel: false
   },
@@ -50,8 +44,6 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canViewReports: true,
     canPrintReports: true,
     canManageUsers: false,
-    canEditConcessions: false,
-    canDeleteConcessions: false,
     canExportData: false,
     canAccessAdminPanel: false
   },
@@ -60,8 +52,6 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canViewReports: false,
     canPrintReports: false,
     canManageUsers: false,
-    canEditConcessions: false,
-    canDeleteConcessions: false,
     canExportData: false,
     canAccessAdminPanel: false
   }

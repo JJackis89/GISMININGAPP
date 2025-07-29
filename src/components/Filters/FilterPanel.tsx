@@ -19,7 +19,7 @@ export default function FilterPanel({ filters, onFiltersChange }: FilterPanelPro
   const [availableStatuses, setAvailableStatuses] = useState<string[]>([])
   const [availableTypes, setAvailableTypes] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
-  const [lastUpdate, setLastUpdate] = useState<Date>(new Date())
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
 
   const expiryWindows = [
     { label: 'Next 30 days', value: '30' },
