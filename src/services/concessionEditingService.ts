@@ -16,7 +16,7 @@ export interface ConcessionFormData {
   name: string
   owner: string
   size: number
-  permitType: 'small-scale' | 'large-scale'
+  permitType: string // Updated to match real hosted layer data (Reconnaissance, Prospecting, Mining Lease, Small Scale)
   permitExpiryDate: string
   district: string
   region: string

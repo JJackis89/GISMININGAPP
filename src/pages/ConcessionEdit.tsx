@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { miningDataService } from '../services/miningDataService'
 import { MiningConcession } from '../types'
-import DataSourceDebug from '../components/Debug/DataSourceDebug'
-import DirectArcGISTest from '../components/Debug/DirectArcGISTest'
 import { 
   Search, 
   Eye,
@@ -116,16 +114,6 @@ export default function ConcessionEdit() {
           <p className="text-red-700 mt-1">{error}</p>
         </div>
       )}
-
-      {/* Debug: Direct ArcGIS Test */}
-      <div className="mb-8">
-        <DirectArcGISTest />
-      </div>
-
-      {/* Data Source Info */}
-      <div className="mb-8">
-        <DataSourceDebug />
-      </div>
 
       {/* Search and Filter Controls */}
       {!loading && concessions.length > 0 && (
