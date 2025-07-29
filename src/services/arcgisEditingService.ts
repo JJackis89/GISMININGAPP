@@ -1,12 +1,6 @@
 import { MiningConcession } from '../types'
 import { arcgisConfig } from '../config/arcgisConfig'
 
-declare global {
-  interface Window {
-    require: any
-  }
-}
-
 export class ArcGISEditingService {
   private featureLayer: any = null
   private isInitialized = false

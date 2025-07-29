@@ -6,12 +6,6 @@ interface MapViewerProps {
   onDataLoaded?: (dataService: typeof miningDataService) => void
 }
 
-declare global {
-  interface Window {
-    require: any
-  }
-}
-
 export default function MapViewer({ className = '', onDataLoaded }: MapViewerProps) {
   const mapDiv = useRef<HTMLDivElement>(null)
   const mapView = useRef<any>(null)
