@@ -25,13 +25,31 @@ class MiningDataService {
     this.initializationAttempted = true
 
     try {
-      // Check if we can load ArcGIS modules
-      if (typeof window === 'undefined' || !window.require) {
-        console.warn('⚠️ ArcGIS API not available, using fallback service')
+      // Check if we're in browser environment
+      if (typeof window === 'undefined') {
+        console.warn('⚠️ Not in browser environment, using fallback service')
         this.usesFallback = true
         await fallbackMiningDataService.initialize()
         return
       }
+
+      // Wait for ArcGIS API to be available (give it time to load from CDN)
+      const maxWaitTime = 10000 // 10 seconds
+      const startTime = Date.now()
+      
+      while (!window.require && (Date.now() - startTime) < maxWaitTime) {
+        console.log('⏳ Waiting for ArcGIS API to load...')
+        await new Promise(resolve => setTimeout(resolve, 500))
+      }
+
+      if (!window.require) {
+        console.warn('⚠️ ArcGIS API not available after waiting, using fallback service')
+        this.usesFallback = true
+        await fallbackMiningDataService.initialize()
+        return
+      }
+
+      console.log('✅ ArcGIS API detected, loading modules...')
 
       // Load ArcGIS modules using AMD loader
       const [FeatureLayer, WebMap] = await new Promise<any[]>((resolve, reject) => {
@@ -492,6 +510,17 @@ class MiningDataService {
   clearCache(): void {
     this.cachedData = []
     this.lastFetch = 0
+  }
+
+  /**
+   * Reset service to retry ArcGIS initialization
+   */
+  resetService(): void {
+    this.usesFallback = false
+    this.initializationAttempted = false
+    this.featureLayer = null
+    this.webMap = null
+    this.clearCache()
   }
 
   /**
