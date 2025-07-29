@@ -19,26 +19,21 @@ export default defineConfig({
     outDir: 'dist',
     assetsDir: 'assets',
     sourcemap: false,
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
-      external: (id) => {
-        // Handle all core-js internals issues
-        if (id.includes('core-js/internals/') || 
-            id.includes('../internals/') ||
-            id.includes('globalThis-this') ||
-            id.includes('define-globalThis-property')) {
-          return true;
-        }
-        return false;
-      },
       output: {
         assetFileNames: 'assets/[name]-[hash][extname]',
         chunkFileNames: 'assets/[name]-[hash].js',
         entryFileNames: 'assets/[name]-[hash].js',
-        globals: {
-          '../internals/define-globalThis-property': 'globalThis'
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          arcgis: ['@arcgis/core'],
+          charts: ['recharts'],
+          utils: ['lucide-react']
         }
       }
     },
-    minify: 'esbuild'
+    minify: 'esbuild',
+    target: 'es2015'
   }
 })
