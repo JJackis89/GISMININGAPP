@@ -2,12 +2,6 @@ import { MiningConcession, DashboardStats } from '../types'
 import { arcgisConfig } from '../config/arcgisConfig'
 import { processConcessionBoundary } from '../utils/geometryUtils'
 
-declare global {
-  interface Window {
-    require: any
-  }
-}
-
 export class ArcGISService {
   private webMapId = arcgisConfig.primaryWebMapId
   private fallbackWebMapId = arcgisConfig.fallbackWebMapId

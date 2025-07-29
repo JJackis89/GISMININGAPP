@@ -4,12 +4,6 @@ interface MapViewerProps {
   className?: string
 }
 
-declare global {
-  interface Window {
-    require: any
-  }
-}
-
 export default function MapViewer({ className = '' }: MapViewerProps) {
   const mapDiv = useRef<HTMLDivElement>(null)
   const mapView = useRef<any>(null)

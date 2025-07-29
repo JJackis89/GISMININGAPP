@@ -69,9 +69,3 @@ export default function MapTest() {
     </div>
   )
 }
-
-declare global {
-  interface Window {
-    require: any
-  }
-}

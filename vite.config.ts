@@ -21,15 +21,26 @@ export default defineConfig({
     sourcemap: false,
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
+      external: (id) => {
+        // Externalize all @arcgis/core modules during build
+        return id.startsWith('@arcgis/core')
+      },
       output: {
         assetFileNames: 'assets/[name]-[hash][extname]',
         chunkFileNames: 'assets/[name]-[hash].js',
         entryFileNames: 'assets/[name]-[hash].js',
         manualChunks: {
           vendor: ['react', 'react-dom', 'react-router-dom'],
-          arcgis: ['@arcgis/core'],
           charts: ['recharts'],
-          utils: ['lucide-react']
+          utils: ['lucide-react'],
+          firebase: ['firebase/app', 'firebase/auth']
+        },
+        globals: (id) => {
+          // Map @arcgis/core modules to global variables
+          if (id.startsWith('@arcgis/core/')) {
+            return 'window.__arcgis_modules__'
+          }
+          return undefined
         }
       }
     },

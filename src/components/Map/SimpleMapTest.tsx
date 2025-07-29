@@ -1,11 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 
-declare global {
-  interface Window {
-    require: any
-  }
-}
-
 export default function SimpleMapTest() {
   const mapDiv = useRef<HTMLDivElement>(null)
   const [status, setStatus] = useState('Initializing...')
