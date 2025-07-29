@@ -21,7 +21,10 @@ export default defineConfig({
     sourcemap: false,
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
-      external: ['@arcgis/core'],
+      external: (id) => {
+        // Externalize all @arcgis/core modules during build
+        return id.startsWith('@arcgis/core')
+      },
       output: {
         assetFileNames: 'assets/[name]-[hash][extname]',
         chunkFileNames: 'assets/[name]-[hash].js',
@@ -31,6 +34,13 @@ export default defineConfig({
           charts: ['recharts'],
           utils: ['lucide-react'],
           firebase: ['firebase/app', 'firebase/auth']
+        },
+        globals: (id) => {
+          // Map @arcgis/core modules to global variables
+          if (id.startsWith('@arcgis/core/')) {
+            return 'window.__arcgis_modules__'
+          }
+          return undefined
         }
       }
     },
