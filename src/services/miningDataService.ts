@@ -1,8 +1,7 @@
-import WebMap from '@arcgis/core/WebMap'
-import FeatureLayer from '@arcgis/core/layers/FeatureLayer'
 import { MiningConcession, DashboardStats } from '../types'
 import { arcgisConfig } from '../config/arcgisConfig'
 import { hectaresToAcres } from '../utils/geometryUtils'
+import { fallbackMiningDataService } from './fallbackMiningDataService'
 
 class MiningDataService {
   private webMap: any = null
@@ -10,18 +9,42 @@ class MiningDataService {
   private cachedData: MiningConcession[] = []
   private lastFetch: number = 0
   private readonly CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
+  private usesFallback = false
+  private initializationAttempted = false
 
   /**
    * Initialize the service with ArcGIS feature service or web map
    */
   async initialize(): Promise<void> {
     // Skip if already initialized
-    if (this.featureLayer) {
+    if (this.featureLayer || this.initializationAttempted) {
       console.log('🔄 Service already initialized, skipping...')
       return
     }
 
+    this.initializationAttempted = true
+
     try {
+      // Check if we can load ArcGIS modules
+      if (typeof window === 'undefined' || !window.require) {
+        console.warn('⚠️ ArcGIS API not available, using fallback service')
+        this.usesFallback = true
+        await fallbackMiningDataService.initialize()
+        return
+      }
+
+      // Load ArcGIS modules using AMD loader
+      const [FeatureLayer, WebMap] = await new Promise<any[]>((resolve, reject) => {
+        window.require([
+          'esri/layers/FeatureLayer',
+          'esri/WebMap'
+        ], (...modules: any[]) => {
+          resolve(modules)
+        }, (error: any) => {
+          reject(error)
+        })
+      })
+
       // Try direct feature service first (preferred method)
       if (arcgisConfig.featureServiceUrls?.miningConcessions) {
         console.log('🔄 Initializing with direct feature service...')
@@ -68,8 +91,9 @@ class MiningDataService {
       await this.featureLayer.load()
       console.log('✅ Mining data service initialized with web map layer:', this.featureLayer.title)
     } catch (error) {
-      console.error('❌ Failed to initialize mining data service:', error)
-      throw error
+      console.error('❌ Failed to initialize ArcGIS mining data service, using fallback:', error)
+      this.usesFallback = true
+      await fallbackMiningDataService.initialize()
     }
   }
 
@@ -84,6 +108,17 @@ class MiningDataService {
       return this.cachedData
     }
 
+    // Initialize if not done yet
+    if (!this.initializationAttempted) {
+      await this.initialize()
+    }
+
+    // Use fallback service if ArcGIS is not available
+    if (this.usesFallback) {
+      return await fallbackMiningDataService.getMiningConcessions(forceRefresh)
+    }
+
+    // Use ArcGIS service
     if (!this.featureLayer) {
       await this.initialize()
     }
@@ -190,7 +225,9 @@ class MiningDataService {
       return this.cachedData
     } catch (error) {
       console.error('❌ Failed to fetch mining concessions:', error)
-      throw error
+      console.warn('🔄 Falling back to mock data service')
+      this.usesFallback = true
+      return await fallbackMiningDataService.getMiningConcessions(forceRefresh)
     }
   }
 
@@ -204,6 +241,10 @@ class MiningDataService {
     status?: string
     permitType?: string
   }): Promise<MiningConcession[]> {
+    if (this.usesFallback) {
+      return await fallbackMiningDataService.searchConcessions(searchCriteria)
+    }
+
     const allConcessions = await this.getMiningConcessions()
     
     return allConcessions.filter(concession => {
@@ -230,6 +271,10 @@ class MiningDataService {
    * Generate dashboard statistics from real data
    */
   async getDashboardStats(): Promise<DashboardStats> {
+    if (this.usesFallback) {
+      return await fallbackMiningDataService.getDashboardStats()
+    }
+
     const concessions = await this.getMiningConcessions()
     
     const stats: DashboardStats = {
@@ -264,6 +309,10 @@ class MiningDataService {
    * Get concessions by region
    */
   async getConcessionsByRegion(region: string): Promise<MiningConcession[]> {
+    if (this.usesFallback) {
+      return await fallbackMiningDataService.getConcessionsByRegion(region)
+    }
+
     const allConcessions = await this.getMiningConcessions()
     return allConcessions.filter(c => c.region === region)
   }
