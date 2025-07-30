@@ -8,11 +8,6 @@
     "NODE_OPTIONS": "--max-old-space-size=4096",
     "NODE_ENV": "production"
   },
-  "functions": {
-    "app/**/*.js": {
-      "runtime": "nodejs18.x"
-    }
-  },
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ],
