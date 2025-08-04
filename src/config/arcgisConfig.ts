@@ -63,7 +63,7 @@ export const arcgisConfig: ArcGISConfig = {
     name: ['Name', 'COMPANY_NAME', 'PROJECT_NAME', 'CONCESSION_NAME'],
     owner: ['ContactPerson', 'Owner', 'COMPANY', 'OPERATOR'],
     size: ['Size', 'Shape__Area', 'AREA_HA', 'ACREAGE'],
-    permitType: ['LicenseType', 'PERMIT_TYPE', 'TYPE', 'CATEGORY'],
+    permitType: ['undertaking', 'UNDERTAKING', 'LicenseType', 'PERMIT_TYPE', 'TYPE', 'CATEGORY'],
     expiryDate: ['Expiry_Date', 'EXPIRY_DATE', 'END_DATE'],
     district: ['District', 'LOCALITY', 'ADMINISTRATIVE_AREA'],
     region: ['Region', 'PROVINCE', 'STATE'],

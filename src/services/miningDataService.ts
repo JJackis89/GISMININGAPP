@@ -344,19 +344,39 @@ class MiningDataService {
       return 'Not Specified'
     }
     
-    const codeStr = String(code)
+    const codeStr = String(code).trim()
+    
+    // Handle numeric codes first
     switch (codeStr) {
       case '1': return 'Reconnaissance'    // Reconnaissance
       case '2': return 'Prospecting'       // Prospecting
       case '3': return 'Mining Lease'      // Mining Lease
       case '4': return 'Small Scale'       // Small Scale
-      default:
-        // For non-coded values, return the actual text value or 'Not Specified'
-        if (codeStr && codeStr !== 'null' && codeStr !== 'undefined') {
-          return codeStr
-        }
-        return 'Not Specified'
     }
+    
+    // Handle text-based undertaking values (case-insensitive)
+    const lowerCode = codeStr.toLowerCase()
+    
+    // Map common undertaking field values
+    if (lowerCode.includes('reconnaissance') || lowerCode.includes('reconn')) {
+      return 'Reconnaissance'
+    }
+    if (lowerCode.includes('prospecting') || lowerCode.includes('prospect')) {
+      return 'Prospecting'
+    }
+    if (lowerCode.includes('mining lease') || lowerCode.includes('lease') || lowerCode.includes('mining')) {
+      return 'Mining Lease'
+    }
+    if (lowerCode.includes('small scale') || lowerCode.includes('small-scale') || lowerCode.includes('artisanal')) {
+      return 'Small Scale'
+    }
+    
+    // For other non-coded values, return the actual text value if it's meaningful
+    if (codeStr && codeStr !== 'null' && codeStr !== 'undefined' && codeStr.length > 0) {
+      return codeStr
+    }
+    
+    return 'Not Specified'
   }
 
   /**
