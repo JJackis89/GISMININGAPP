@@ -34,13 +34,6 @@ export default defineConfig({
           charts: ['recharts'],
           utils: ['lucide-react'],
           firebase: ['firebase/app', 'firebase/auth']
-        },
-        globals: (id) => {
-          // Map @arcgis/core modules to global variables
-          if (id.startsWith('@arcgis/core/')) {
-            return 'window.__arcgis_modules__'
-          }
-          return undefined
         }
       }
     },

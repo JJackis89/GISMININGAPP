@@ -1,5 +1,4 @@
-﻿import WebMap from '@arcgis/core/WebMap'
-import FeatureLayer from '@arcgis/core/layers/FeatureLayer'
+﻿import { loadModules } from 'esri-loader'
 import { MiningConcession, DashboardStats } from '../types'
 import { arcgisConfig } from '../config/arcgisConfig'
 import { hectaresToAcres } from '../utils/geometryUtils'
@@ -23,6 +22,12 @@ class MiningDataService {
     }
 
     try {
+      // Load ArcGIS modules using esri-loader
+      const [WebMap, FeatureLayer] = await loadModules([
+        'esri/WebMap',
+        'esri/layers/FeatureLayer'
+      ])
+
       // Try direct feature service first (preferred method)
       if (arcgisConfig.featureServiceUrls?.miningConcessions) {
         console.log('≡ƒöä Initializing with direct feature service...')
