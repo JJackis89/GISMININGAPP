@@ -325,7 +325,7 @@ const MapViewer: React.FC<MapViewerProps> = ({
                 } : undefined
               }))
             
-            console.log(`✅ Created ${fieldInfos.length} field infos for popup:`, fieldInfos.map(f => f.fieldName))
+            console.log(`✅ Created ${fieldInfos.length} field infos for popup:`, fieldInfos.map((f: any) => f.fieldName))
             
             // Update the popup template with all fields
             miningLayer.popupTemplate = {
