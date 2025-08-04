@@ -3,6 +3,7 @@ import FeatureLayer from '@arcgis/core/layers/FeatureLayer'
 import { MiningConcession, DashboardStats } from '../types'
 import { arcgisConfig } from '../config/arcgisConfig'
 import { hectaresToAcres } from '../utils/geometryUtils'
+import { notificationService } from './notificationService'
 
 class MiningDataService {
   private webMap: any = null
@@ -187,6 +188,9 @@ class MiningDataService {
       this.lastFetch = now
       console.log(`Γ£à Fetched ${this.cachedData.length} mining concessions from ArcGIS`)
       
+      // Generate notifications for expired and due-for-renewal permits
+      notificationService.generatePermitNotifications(this.cachedData)
+      
       return this.cachedData
     } catch (error) {
       console.error('Γ¥î Failed to fetch mining concessions:', error)
@@ -236,11 +240,20 @@ class MiningDataService {
       totalConcessions: concessions.length,
       activePermits: concessions.filter(c => c.status === 'Active').length,
       expiredPermits: concessions.filter(c => c.status === 'Expired').length,
+      // Count permits due for renewal (expiring within 6 months)
       soonToExpire: concessions.filter(c => {
+        // Only count active permits that are approaching expiry
+        if (c.status !== 'Active') return false
+        
         const expiryDate = new Date(c.permitExpiryDate)
-        const threeMonthsFromNow = new Date()
-        threeMonthsFromNow.setMonth(threeMonthsFromNow.getMonth() + 3)
-        return expiryDate <= threeMonthsFromNow && c.status === 'active'
+        const today = new Date()
+        const sixMonthsFromNow = new Date()
+        sixMonthsFromNow.setMonth(sixMonthsFromNow.getMonth() + 6)
+        
+        // Check if expiry date is valid and within the next 6 months
+        return !isNaN(expiryDate.getTime()) && 
+               expiryDate > today && 
+               expiryDate <= sixMonthsFromNow
       }).length,
       totalAreaCovered: concessions.reduce((total, c) => total + c.size, 0),
       concessionsByRegion: {},

@@ -35,7 +35,7 @@ export default function StatsCards({ stats }: StatsCardsProps) {
       textColor: 'text-red-600'
     },
     {
-      title: 'Expiring Soon',
+      title: 'Due for Renewal',
       value: stats.soonToExpire,
       icon: AlertTriangle,
       color: 'bg-epa-orange-500',

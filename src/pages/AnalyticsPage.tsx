@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react'
 import ChartsSection from '../components/Charts/ChartsSection'
-import StatsCards from '../components/Charts/StatsCards'
 import RefreshButton from '../components/ui/RefreshButton'
 import { DashboardStats } from '../types'
 import miningDataService from '../services/miningDataService'
 import { dataRefreshService } from '../services/dataRefreshService'
-import { BarChart, TrendingUp, PieChart, Activity } from 'lucide-react'
+import { BarChart, TrendingUp, PieChart, Activity, MapPin } from 'lucide-react'
 
 export default function AnalyticsPage() {
   const [stats, setStats] = useState<DashboardStats>({
@@ -88,7 +87,19 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <div className="flex items-center">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <MapPin className="h-6 w-6 text-blue-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Total Concessions</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.totalConcessions.toLocaleString()}</p>
+            </div>
+          </div>
+        </div>
+
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <div className="flex items-center">
             <div className="p-2 bg-epa-blue-100 rounded-lg">
@@ -117,13 +128,13 @@ export default function AnalyticsPage() {
 
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <div className="flex items-center">
-            <div className="p-2 bg-epa-orange-100 rounded-lg">
-              <PieChart className="h-6 w-6 text-epa-orange-600" />
+            <div className="p-2 bg-red-100 rounded-lg">
+              <PieChart className="h-6 w-6 text-red-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Regions</p>
+              <p className="text-sm font-medium text-gray-600">Expired Permits</p>
               <p className="text-2xl font-bold text-gray-900">
-                {Object.keys(stats.concessionsByRegion).length}
+                {stats.expiredPermits}
               </p>
             </div>
           </div>
@@ -135,15 +146,12 @@ export default function AnalyticsPage() {
               <Activity className="h-6 w-6 text-red-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Expiring Soon</p>
+              <p className="text-sm font-medium text-gray-600">Due for Renewal</p>
               <p className="text-2xl font-bold text-gray-900">{stats.soonToExpire}</p>
             </div>
           </div>
         </div>
       </div>
-
-      {/* Stats Cards */}
-      <StatsCards stats={stats} />
 
       {/* Charts Section */}
       <ChartsSection stats={stats} />
@@ -162,7 +170,7 @@ export default function AnalyticsPage() {
               <span className="font-semibold text-red-600">{stats.expiredPermits}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-gray-600">Soon to Expire</span>
+              <span className="text-gray-600">Due for Renewal</span>
               <span className="font-semibold text-epa-orange-600">{stats.soonToExpire}</span>
             </div>
           </div>

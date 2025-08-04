@@ -29,7 +29,7 @@ export default function StatsCards({ stats }: StatsCardsProps) {
       trend: '-3%'
     },
     {
-      title: 'Soon to Expire',
+      title: 'Due for Renewal',
       value: stats.soonToExpire,
       icon: AlertTriangle,
       color: 'text-yellow-600 bg-yellow-100',

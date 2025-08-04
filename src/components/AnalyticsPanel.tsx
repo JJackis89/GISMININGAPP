@@ -172,7 +172,7 @@ export default function AnalyticsPanel({ dataService, concessions }: AnalyticsPa
           <div className="flex items-center justify-between">
             <div>
               <div className="text-2xl font-bold text-yellow-900">{stats.soonToExpire}</div>
-              <div className="text-xs text-yellow-700">Expiring Soon</div>
+              <div className="text-xs text-yellow-700">Due for Renewal</div>
             </div>
             <AlertTriangle className="h-6 w-6 text-yellow-600" />
           </div>

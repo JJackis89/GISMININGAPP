@@ -21,7 +21,7 @@ export default function ChartsSection({ stats }: ChartsSectionProps) {
   const statusData = [
     { name: 'Active', value: stats.activePermits },
     { name: 'Expired', value: stats.expiredPermits },
-    { name: 'Soon to Expire', value: stats.soonToExpire }
+    { name: 'Due for Renewal', value: stats.soonToExpire }
   ]
 
   return (

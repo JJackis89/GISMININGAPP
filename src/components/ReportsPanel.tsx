@@ -129,7 +129,7 @@ export default function ReportsPanel({ dataService, concessions }: ReportsPanelP
           </div>
           <div className="text-center p-3 bg-yellow-50 rounded border border-yellow-200">
             <div className="text-lg font-bold text-yellow-900">{reportData.complianceStatus.expiring}</div>
-            <div className="text-xs text-yellow-700">Expiring Soon</div>
+            <div className="text-xs text-yellow-700">Due for Renewal</div>
           </div>
           <div className="text-center p-3 bg-red-50 rounded border border-red-200">
             <div className="text-lg font-bold text-red-900">{reportData.complianceStatus.expired}</div>
@@ -143,7 +143,7 @@ export default function ReportsPanel({ dataService, concessions }: ReportsPanelP
         <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
           <h4 className="text-sm font-semibold text-yellow-900 mb-3 flex items-center">
             <AlertTriangle className="h-4 w-4 mr-2" />
-            Permits Expiring Soon (Next 6 Months)
+            Permits Due for Renewal (Next 6 Months)
           </h4>
           <div className="space-y-2 max-h-48 overflow-y-auto">
             {reportData.expiringConcessions.map((concession) => (

@@ -443,7 +443,7 @@ export default function ReportsPage() {
                     <div>
                       <p className="text-sm font-medium text-gray-900">Expiry Report</p>
                       <p className="text-xs text-gray-600">
-                        {stats.soonToExpire} permits expiring soon
+                        {stats.soonToExpire} permits due for renewal
                       </p>
                     </div>
                   </div>

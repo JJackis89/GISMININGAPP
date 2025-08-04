@@ -252,48 +252,7 @@ const MapViewer: React.FC<MapViewerProps> = ({
             content: [
               {
                 type: 'fields',
-                fieldInfos: [
-                  { 
-                    fieldName: 'PermitNumber', 
-                    label: 'Permit Number',
-                    visible: true
-                  },
-                  { 
-                    fieldName: 'ContactPerson', 
-                    label: 'Contact Person',
-                    visible: true
-                  },
-                  { 
-                    fieldName: 'LicenseStatus', 
-                    label: 'Status',
-                    visible: true
-                  },
-                  { 
-                    fieldName: 'LicenseType', 
-                    label: 'License Type',
-                    visible: true
-                  },
-                  { 
-                    fieldName: 'Size', 
-                    label: 'Size',
-                    visible: true
-                  },
-                  { 
-                    fieldName: 'Town', 
-                    label: 'Town',
-                    visible: true
-                  },
-                  { 
-                    fieldName: 'District', 
-                    label: 'District',
-                    visible: true
-                  },
-                  { 
-                    fieldName: 'Region', 
-                    label: 'Region',
-                    visible: true
-                  }
-                ]
+                fieldInfos: [] // Will be populated dynamically with all fields
               }
             ],
             actions: [
@@ -340,6 +299,56 @@ const MapViewer: React.FC<MapViewerProps> = ({
           console.log('📊 Layer extent:', miningLayer.fullExtent)
           console.log('🏷️ Layer fields:', miningLayer.fields?.map((f: any) => f.name) || 'No fields')
           console.log('✅ Layer loaded state:', miningLayer.loaded)
+          
+          // Dynamically populate popup template with all fields from the hosted layer
+          if (miningLayer.fields && miningLayer.fields.length > 0) {
+            console.log('🔧 Setting up dynamic popup template with all fields...')
+            
+            const fieldInfos = miningLayer.fields
+              .filter((field: any) => {
+                // Exclude system fields, geometry fields, and metadata fields
+                const excludeFields = [
+                  'OBJECTID', 'OBJECTID_1', 'GlobalID', 'SHAPE', 'SHAPE_Length', 'SHAPE_Area', 'Shape__Area', 'Shape__Length',
+                  'CreationDate', 'Creator', 'EditDate', 'Editor', 'created_user', 'created_date', 'last_edited_user', 'last_edited_date'
+                ]
+                return !excludeFields.includes(field.name)
+              })
+              .map((field: any) => ({
+                fieldName: field.name,
+                label: field.alias || field.name, // Use alias if available, otherwise use field name
+                visible: true,
+                format: field.type === 'esriFieldTypeDate' ? {
+                  dateFormat: 'short-date'
+                } : field.name === 'Size' ? {
+                  digitSeparator: true,
+                  places: 1
+                } : undefined
+              }))
+            
+            console.log(`✅ Created ${fieldInfos.length} field infos for popup:`, fieldInfos.map(f => f.fieldName))
+            
+            // Update the popup template with all fields
+            miningLayer.popupTemplate = {
+              title: '{Name}',
+              content: [
+                {
+                  type: 'fields',
+                  fieldInfos: fieldInfos
+                }
+              ],
+              actions: [
+                {
+                  title: 'Print Concession Details',
+                  id: 'print-concession',
+                  className: 'esri-icon-printer'
+                }
+              ]
+            }
+            
+            console.log('🎉 Dynamic popup template configured successfully!')
+          } else {
+            console.warn('⚠️ No fields found on mining layer')
+          }
           
           // Update search widget with mining layer as source
           if (searchWidgetRef.current) {
