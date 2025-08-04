@@ -1,5 +1,5 @@
 /**
- * Print Button Component for EPA Mining Concessions Management System
+ * Print Button Component for EPA MINING DATABASE
  * Provides printing functionality with options dialog for mining concession data
  */
 

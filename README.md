@@ -1,4 +1,4 @@
-# EPA Mining Concessions Management System
+# EPA MINING DATABASE
 
 A professional web-based GIS dashboard application for managing and visualizing mining concession data in Ghana. Developed for the Environmental Protection Authority (EPA) of Ghana with integrated ArcGIS Online mapping capabilities and Firebase authentication.
 

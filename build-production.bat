@@ -1,6 +1,6 @@
 @echo off
 echo ========================================
-echo   EPA Mining Dashboard - Build Script
+echo   EPA MINING DATABASE - Build Script
 echo   Environmental Protection Authority
 echo ========================================
 echo.

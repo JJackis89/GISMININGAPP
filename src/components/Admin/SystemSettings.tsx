@@ -7,7 +7,7 @@ interface SystemSettingsProps {
 
 const SystemSettings: React.FC<SystemSettingsProps> = ({ className = '' }) => {
   const [settings, setSettings] = useState({
-    systemName: 'EPA Mining Concessions Management System',
+    systemName: 'EPA MINING DATABASE',
     organizationName: 'Environmental Protection Authority - Ghana',
     contactEmail: 'gis@epa.gov.gh',
     maxUsers: 100,
@@ -35,7 +35,7 @@ const SystemSettings: React.FC<SystemSettingsProps> = ({ className = '' }) => {
     if (confirm('Are you sure you want to reset all settings to default values?')) {
       // Reset to default values
       setSettings({
-        systemName: 'EPA Mining Concessions Management System',
+        systemName: 'EPA MINING DATABASE',
         organizationName: 'Environmental Protection Authority - Ghana',
         contactEmail: 'gis@epa.gov.gh',
         maxUsers: 100,

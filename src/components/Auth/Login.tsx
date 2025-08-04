@@ -60,7 +60,9 @@ export default function Login() {
             <div className="mx-auto h-20 w-20 mb-4">
               <img src="/epa-logo.png" alt="EPA Logo" className="h-full w-full" />
             </div>
-            <h2 className="text-3xl font-bold text-gray-900">Welcome Back</h2>
+                      <h2 className="text-3xl font-bold text-gray-900 mb-2">
+            Ghana EPA MINING DATABASE
+          </h2>
             <p className="mt-2 text-gray-600">Environmental Protection Authority</p>
             <p className="text-gray-600">Mining Concession Management System</p>
           </div>

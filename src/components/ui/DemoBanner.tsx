@@ -15,7 +15,7 @@ export function DemoBanner() {
         <Info className="h-5 w-5 text-epa-orange-500 mr-3" />
         <div>
           <p className="text-sm text-epa-orange-700">
-            <strong>Demo Mode:</strong> You're viewing the EPA Mining Concessions Management System with sample data.
+            <strong>Demo Mode:</strong> You're viewing the EPA MINING DATABASE with sample data.
             All features are fully functional for demonstration purposes.
           </p>
         </div>

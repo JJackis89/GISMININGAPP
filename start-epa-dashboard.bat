@@ -1,6 +1,6 @@
 @echo off
 echo ========================================
-echo   EPA Mining Concessions Dashboard
+echo   EPA MINING DATABASE
 echo   Environmental Protection Authority
 echo ========================================
 echo.
@@ -39,7 +39,7 @@ if not exist "node_modules" (
 )
 
 echo.
-echo Starting EPA Mining Dashboard...
+echo Starting EPA Mining Database...
 echo Server will be available at: http://localhost:5173 (or next available port)
 echo.
 echo Press Ctrl+C to stop the server

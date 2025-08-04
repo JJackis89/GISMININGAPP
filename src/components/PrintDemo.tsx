@@ -22,7 +22,7 @@ export const PrintDemo: React.FC = () => {
       {/* Header */}
       <div className="text-center">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          EPA Mining Concessions Print System
+          EPA MINING DATABASE Print System
         </h1>
         <p className="text-gray-600">
           Professional document generation for mining concession certificates

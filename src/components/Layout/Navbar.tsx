@@ -69,7 +69,7 @@ export default function Navbar() {
           <div className="flex items-center space-x-3">
             <img src="/epa-logo.png" alt="EPA Logo" className="h-10 w-10" />
             <div>
-              <h1 className="text-xl font-semibold text-gray-900">EPA Mining Concessions</h1>
+              <h1 className="text-xl font-semibold text-gray-900">EPA MINING DATABASE</h1>
               <p className="text-sm text-gray-600">Environmental Protection Authority</p>
             </div>
           </div>

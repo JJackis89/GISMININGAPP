@@ -176,7 +176,7 @@ export default function Dashboard() {
         <div className="xl:col-span-2">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 h-96">
             <div className="p-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">EPA Mining Concessions Map</h3>
+              <h3 className="text-lg font-semibold text-gray-900">EPA MINING DATABASE Map</h3>
               <p className="text-sm text-gray-600">Environmental monitoring and compliance tracking</p>
             </div>
             <div className="h-80">

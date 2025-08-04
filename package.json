@@ -2,7 +2,7 @@
   "name": "epa-mining-concessions-dashboard",
   "private": true,
   "version": "1.0.1",
-  "description": "EPA Mining Concessions Management System - Environmental Protection Authority of Ghana with Firebase Authentication",
+  "description": "EPA MINING DATABASE - Environmental Protection Authority of Ghana with Firebase Authentication",
   "type": "module",
   "scripts": {
     "dev": "vite",

@@ -276,7 +276,7 @@ export default function AnalyticsPanel({ dataService, concessions }: AnalyticsPa
             📊 Live Analytics from Hosted Layer
           </div>
           <div className="mt-1">
-            • Data source: EPA Mining Concessions (ArcGIS FeatureServer)
+            • Data source: EPA MINING DATABASE (ArcGIS FeatureServer)
             • Last updated: {lastUpdate ? lastUpdate.toLocaleString() : 'Never'}
             • Auto-refresh: Enabled
             • Total concessions analyzed: {stats.totalConcessions}

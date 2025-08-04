@@ -1,4 +1,4 @@
-# Vercel Deployment Guide for EPA Mining Concessions App
+# EPA MINING DATABASE - Deployment Guide
 
 ## Quick Deployment Steps
 
