@@ -186,7 +186,8 @@ class MiningDataService {
             phone: this.getFieldValue(attributes, ['ContactNumber']) || this.getFieldValue(attributes, mappings.phone),
             email: this.getFieldValue(attributes, mappings.email),
             address: this.getFieldValue(attributes, mappings.address)
-          }
+          },
+          rawAttributes: attributes // Store all raw attributes for comprehensive export
         } as MiningConcession
       })
 
@@ -497,10 +498,61 @@ class MiningDataService {
   }
 
   /**
-   * Export concessions data to CSV format
+   * Calculate centroid (center point) from polygon coordinates
+   */
+  private calculateCentroid(coordinates: [number, number][]): string {
+    if (coordinates.length === 0) {
+      return 'N/A'
+    }
+
+    // Calculate centroid using average of all coordinates
+    let sumLat = 0
+    let sumLng = 0
+    let validPoints = 0
+
+    coordinates.forEach(([lng, lat]) => {
+      if (typeof lng === 'number' && typeof lat === 'number' && !isNaN(lng) && !isNaN(lat)) {
+        sumLng += lng
+        sumLat += lat
+        validPoints++
+      }
+    })
+
+    if (validPoints === 0) {
+      return 'N/A'
+    }
+
+    const centroidLng = sumLng / validPoints
+    const centroidLat = sumLat / validPoints
+
+    // Format to 6 decimal places for precision
+    return `${centroidLat.toFixed(6)}, ${centroidLng.toFixed(6)}`
+  }
+
+  /**
+   * Export concessions data to CSV format with all fields shown in popup
    */
   exportToCSV(concessions: MiningConcession[]): string {
-    const headers = [
+    if (concessions.length === 0) {
+      return 'No data to export'
+    }
+
+    // Get all unique field names from raw attributes, excluding system fields
+    const systemFields = ['OBJECTID', 'SHAPE', 'SHAPE_Length', 'SHAPE_Area', 'GLOBALID', 'GlobalID', 'Shape__Area', 'Shape__Length']
+    const allFieldNames = new Set<string>()
+    
+    concessions.forEach(concession => {
+      if (concession.rawAttributes) {
+        Object.keys(concession.rawAttributes).forEach(field => {
+          if (!systemFields.includes(field)) {
+            allFieldNames.add(field)
+          }
+        })
+      }
+    })
+
+    // Create headers with primary fields first, then additional raw fields
+    const primaryHeaders = [
       'ID',
       'Name', 
       'Owner',
@@ -510,23 +562,66 @@ class MiningDataService {
       'Region',
       'District',
       'Permit Expiry Date',
-      'Coordinates'
+      'Phone',
+      'Email',
+      'Address',
+      'Centroid'
     ]
 
+    // Add any additional fields from raw attributes that aren't already covered
+    const additionalFields = Array.from(allFieldNames).filter(field => {
+      // Map raw field names to our primary field concepts to avoid duplication
+      const fieldMappings = [
+        'OBJECTID', 'NAME', 'CONCESSION_NAME', 'HOLDER', 'COMPANY', 'LICENSE_TY', 'PERMIT_TYPE',
+        'STATUS', 'REGION', 'DISTRICTS', 'DISTRICT', 'SIZE_ACRES', 'AREA', 'PHONE', 'EMAIL', 'ADDRESS'
+      ]
+      
+      // Fields to exclude from export
+      const excludedFields = [
+        'CREATIONDATE', 'CREATOR', 'EDITDATE', 'EDITOR', 'EXPIRY_DATE',
+        'LICENSESTATUS', 'LICENSETYPE'
+      ]
+      
+      return !fieldMappings.includes(field.toUpperCase()) && !excludedFields.includes(field.toUpperCase())
+    })
+
+    const allHeaders = [...primaryHeaders, ...additionalFields]
+
+    // Generate CSV content
     const csvContent = [
-      headers.join(','),
-      ...concessions.map(concession => [
-        concession.id,
-        `"${concession.name}"`,
-        `"${concession.owner}"`,
-        concession.size,
-        concession.permitType,
-        concession.status,
-        concession.region,
-        concession.district,
-        concession.permitExpiryDate,
-        `"${concession.coordinates.map(coord => `${coord[0]},${coord[1]}`).join(';')}"`
-      ].join(','))
+      allHeaders.join(','),
+      ...concessions.map(concession => {
+        const primaryValues = [
+          concession.id,
+          `"${concession.name}"`,
+          `"${concession.owner}"`,
+          concession.size,
+          this.decodeLicenseType(concession.rawAttributes?.LicenseType || concession.rawAttributes?.LICENSE_TY || concession.permitType),
+          this.decodeLicenseStatus(concession.rawAttributes?.LicenseStatus || concession.rawAttributes?.STATUS || concession.status),
+          concession.region,
+          concession.district,
+          concession.permitExpiryDate,
+          `"${concession.contactInfo?.phone || ''}"`,
+          `"${concession.contactInfo?.email || ''}"`,
+          `"${concession.contactInfo?.address || ''}"`,
+          `"${this.calculateCentroid(concession.coordinates)}"`
+        ]
+
+        // Add values for additional fields from raw attributes
+        const additionalValues = additionalFields.map(field => {
+          const value = concession.rawAttributes?.[field]
+          if (value === null || value === undefined) {
+            return ''
+          }
+          // Handle string values with quotes to escape commas
+          if (typeof value === 'string' && (value.includes(',') || value.includes('"') || value.includes('\n'))) {
+            return `"${value.replace(/"/g, '""')}"`
+          }
+          return value
+        })
+
+        return [...primaryValues, ...additionalValues].join(',')
+      })
     ].join('\n')
 
     return csvContent

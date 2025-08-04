@@ -74,6 +74,7 @@ export interface MiningConcession {
     address?: string
   }
   attachments?: string[]
+  rawAttributes?: Record<string, any> // Store all raw fields from ArcGIS for CSV export
 }
 
 export interface DashboardStats {
