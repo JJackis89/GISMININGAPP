@@ -229,8 +229,12 @@ class MiningDataService {
       if (searchCriteria.status && concession.status !== searchCriteria.status) {
         return false
       }
-      if (searchCriteria.permitType && concession.permitType !== searchCriteria.permitType) {
-        return false
+      if (searchCriteria.permitType) {
+        // Check both processed permitType and raw undertaking field
+        const undertakingValue = concession.rawAttributes?.undertaking || concession.rawAttributes?.UNDERTAKING
+        if (concession.permitType !== searchCriteria.permitType && undertakingValue !== searchCriteria.permitType) {
+          return false
+        }
       }
       return true
     })
@@ -289,9 +293,15 @@ class MiningDataService {
       stats.concessionsByRegion[concession.region] = (stats.concessionsByRegion[concession.region] || 0) + 1
     })
 
-    // Group by type
+    // Group by type using raw undertaking field instead of processed permitType
     concessions.forEach(concession => {
-      stats.concessionsByType[concession.permitType] = (stats.concessionsByType[concession.permitType] || 0) + 1
+      // Use raw undertaking field for stats grouping
+      const undertakingValue = concession.rawAttributes?.undertaking || 
+                              concession.rawAttributes?.UNDERTAKING || 
+                              concession.permitType || 
+                              'Not Specified'
+      
+      stats.concessionsByType[undertakingValue] = (stats.concessionsByType[undertakingValue] || 0) + 1
     })
 
     return stats
