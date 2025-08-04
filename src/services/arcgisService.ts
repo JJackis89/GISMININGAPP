@@ -428,15 +428,41 @@ export class ArcGISService {
 
 export function calculateStatsFromConcessions(concessions: MiningConcession[]): DashboardStats {
   const totalConcessions = concessions.length
-  const activeConcessions = concessions.filter(c => c.status === 'Active').length
-  const totalArea = concessions.reduce((sum, c) => sum + c.size, 0)
-  
-  // Calculate expiring soon (within 6 months)
+  const today = new Date()
   const sixMonthsFromNow = new Date()
   sixMonthsFromNow.setMonth(sixMonthsFromNow.getMonth() + 6)
-  const expiringSoon = concessions.filter(c => {
+  
+  // Count active permits (status is Active AND not expired)
+  const activeConcessions = concessions.filter(c => {
+    if (c.status !== 'Active') return false
     const expiryDate = new Date(c.permitExpiryDate)
-    return expiryDate <= sixMonthsFromNow && c.status === 'Active'
+    // If expiry date is invalid, consider it active
+    if (isNaN(expiryDate.getTime()) || c.permitExpiryDate === 'Not Specified') return true
+    // Only active if not past expiry date
+    return expiryDate >= today
+  }).length
+  
+  // Count expired permits (status is Expired OR expiry date has passed)
+  const expiredConcessions = concessions.filter(c => {
+    const expiryDate = new Date(c.permitExpiryDate)
+    // Skip if expiry date is invalid
+    if (isNaN(expiryDate.getTime()) || c.permitExpiryDate === 'Not Specified') {
+      return c.status === 'Expired'
+    }
+    // Expired if status is Expired OR (Active but past expiry date)
+    return c.status === 'Expired' || (expiryDate < today && c.status === 'Active')
+  }).length
+  
+  const totalArea = concessions.reduce((sum, c) => sum + c.size, 0)
+  
+  // Calculate expiring soon (active permits within 6 months)
+  const expiringSoon = concessions.filter(c => {
+    if (c.status !== 'Active') return false
+    const expiryDate = new Date(c.permitExpiryDate)
+    return !isNaN(expiryDate.getTime()) && 
+           c.permitExpiryDate !== 'Not Specified' &&
+           expiryDate > today && 
+           expiryDate <= sixMonthsFromNow
   }).length
 
   // Calculate by region
@@ -456,7 +482,7 @@ export function calculateStatsFromConcessions(concessions: MiningConcession[]): 
   return {
     totalConcessions,
     activePermits: activeConcessions,
-    expiredPermits: concessions.filter(c => c.status === 'Expired').length,
+    expiredPermits: expiredConcessions,
     soonToExpire: expiringSoon,
     totalAreaCovered: Math.round(totalArea * 10) / 10,
     concessionsByRegion: regionStats,

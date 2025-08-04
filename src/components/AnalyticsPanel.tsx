@@ -43,11 +43,41 @@ export default function AnalyticsPanel({ dataService, concessions }: AnalyticsPa
       const concessions = await miningDataService.getMiningConcessions(true) // Force refresh for fresh data
       
       // Calculate comprehensive statistics using exact hosted layer data
+      const today = new Date()
+      const sixMonthsFromNow = new Date()
+      sixMonthsFromNow.setMonth(sixMonthsFromNow.getMonth() + 6)
+      
       const calculatedStats: DashboardStats = {
         totalConcessions: concessions.length,
-        activePermits: concessions.filter(c => c.status === 'Active').length,
-        expiredPermits: concessions.filter(c => c.status === 'Expired').length,
-        soonToExpire: concessions.filter(c => c.status === 'Under Review').length, // Using Under Review as soon-to-expire
+        activePermits: concessions.filter(c => {
+          // Only count as active if status is Active AND not expired
+          if (c.status !== 'Active') return false
+          const expiryDate = new Date(c.permitExpiryDate)
+          // If expiry date is invalid, consider it active
+          if (isNaN(expiryDate.getTime()) || c.permitExpiryDate === 'Not Specified') return true
+          // Only active if not past expiry date
+          return expiryDate >= today
+        }).length,
+        expiredPermits: concessions.filter(c => {
+          // Count as expired if status is Expired OR if expiry date has passed
+          const expiryDate = new Date(c.permitExpiryDate)
+          // Skip if expiry date is invalid
+          if (isNaN(expiryDate.getTime()) || c.permitExpiryDate === 'Not Specified') {
+            return c.status === 'Expired'
+          }
+          // Expired if status is Expired OR (Active but past expiry date)
+          return c.status === 'Expired' || (expiryDate < today && c.status === 'Active')
+        }).length,
+        soonToExpire: concessions.filter(c => {
+          // Only count active permits that are approaching expiry
+          if (c.status !== 'Active') return false
+          const expiryDate = new Date(c.permitExpiryDate)
+          // Check if expiry date is valid and within the next 6 months
+          return !isNaN(expiryDate.getTime()) && 
+                 c.permitExpiryDate !== 'Not Specified' &&
+                 expiryDate > today && 
+                 expiryDate <= sixMonthsFromNow
+        }).length,
         totalAreaCovered: concessions.reduce((total, c) => total + (c.size || 0), 0),
         
         // Use exact hosted layer field data for breakdowns
