@@ -517,6 +517,7 @@ export function calculateStatsFromConcessions(concessions: MiningConcession[]): 
     soonToExpire: expiringSoon,
     totalAreaCovered: Math.round(totalArea * 10) / 10,
     concessionsByRegion: regionStats,
+    concessionsByDistrict: {},
     concessionsByType: typeStats,
     concessionsByMiningMethod: miningMethodStats
   }

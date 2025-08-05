@@ -551,6 +551,7 @@ class PostgreSQLDataService {
         soonToExpire,
         totalAreaCovered: Math.round(totalAreaCovered * 100) / 100,
         concessionsByRegion,
+        concessionsByDistrict: {},
         concessionsByType,
         concessionsByMiningMethod
       }

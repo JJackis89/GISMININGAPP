@@ -86,6 +86,13 @@ export default function AnalyticsPanel({ dataService, concessions }: AnalyticsPa
           return acc
         }, {} as Record<string, number>),
         
+        concessionsByDistrict: concessions.reduce((acc, c) => {
+          if (c.district) {
+            acc[c.district] = (acc[c.district] || 0) + 1
+          }
+          return acc
+        }, {} as Record<string, number>),
+        
         concessionsByType: concessions.reduce((acc, c) => {
           // Only include records with valid permitType data from hosted layer
           if (c.permitType && c.permitType !== 'Not Specified' && c.permitType !== 'null' && c.permitType !== '') {

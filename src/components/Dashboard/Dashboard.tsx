@@ -22,6 +22,7 @@ export default function Dashboard() {
     soonToExpire: 0,
     totalAreaCovered: 0,
     concessionsByRegion: {},
+    concessionsByDistrict: {},
     concessionsByType: {},
     concessionsByMiningMethod: {}
   })

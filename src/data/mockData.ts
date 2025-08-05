@@ -202,6 +202,7 @@ export function calculateStats(concessions: MiningConcession[]): DashboardStats 
     soonToExpire,
     totalAreaCovered,
     concessionsByRegion,
+    concessionsByDistrict: {},
     concessionsByType,
     concessionsByMiningMethod
   }
