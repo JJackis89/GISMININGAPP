@@ -137,7 +137,10 @@ class LocalAuthSystem {
       expires_at: now + (24 * 60 * 60 * 1000) // 24 hours
     }
     
-    localStorage.setItem(this.storageKey, JSON.stringify(session))
+    // Only access localStorage in browser environment
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.setItem(this.storageKey, JSON.stringify(session))
+    }
     return session
   }
 
@@ -199,11 +202,19 @@ class LocalAuthSystem {
     // Simulate API call delay
     await new Promise(resolve => setTimeout(resolve, 200))
     
-    localStorage.removeItem(this.storageKey)
+    // Only access localStorage in browser environment
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.removeItem(this.storageKey)
+    }
     console.log('✅ Local auth sign out successful')
   }
 
   getSession(): AuthSession | null {
+    // Only access localStorage in browser environment
+    if (typeof window === 'undefined' || !window.localStorage) {
+      return null
+    }
+
     try {
       const stored = localStorage.getItem(this.storageKey)
       if (!stored) return null

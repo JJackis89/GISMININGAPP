@@ -21,10 +21,6 @@ export default defineConfig({
     sourcemap: false,
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
-      external: (id) => {
-        // Externalize all @arcgis/core modules during build
-        return id.startsWith('@arcgis/core')
-      },
       output: {
         assetFileNames: 'assets/[name]-[hash][extname]',
         chunkFileNames: 'assets/[name]-[hash].js',
