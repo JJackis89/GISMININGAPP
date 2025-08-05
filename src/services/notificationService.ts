@@ -38,8 +38,8 @@ class NotificationService {
         return
       }
 
-      // Notification for expired permits
-      if (concession.status === 'Expired' || (expiryDate < today && concession.status === 'Active')) {
+      // Notification for expired permits - ONLY based on expiry date, ignore status field
+      if (expiryDate < today) {
         newNotifications.push({
           id: `expired-${concession.id}`,
           type: 'expired',
@@ -52,12 +52,8 @@ class NotificationService {
           priority: 'high'
         })
       }
-      // Notification for permits due for renewal (within 6 months)
-      else if (
-        concession.status === 'Active' && 
-        expiryDate > today && 
-        expiryDate <= sixMonthsFromNow
-      ) {
+      // Notification for permits due for renewal (within 6 months) - ONLY based on expiry date
+      else if (expiryDate > today && expiryDate <= sixMonthsFromNow) {
         const daysUntilExpiry = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
         const priority = daysUntilExpiry <= 30 ? 'high' : daysUntilExpiry <= 90 ? 'medium' : 'low'
         

@@ -165,6 +165,36 @@ export function calculateStats(concessions: MiningConcession[]): DashboardStats 
     return acc
   }, {} as Record<string, number>)
 
+  const concessionsByMiningMethod = concessions.reduce((acc, c) => {
+    // Get mining method from rawAttributes or default - expanded field search
+    let rawMiningMethod = c.rawAttributes?.['Mining Method'] || 
+                        c.rawAttributes?.['MINING_METHOD'] || 
+                        c.rawAttributes?.['mining_method'] || 
+                        c.rawAttributes?.['MiningMethod'] || 
+                        c.rawAttributes?.['method'] ||
+                        c.rawAttributes?.['METHOD'] ||
+                        c.rawAttributes?.['mining_type'] ||
+                        c.rawAttributes?.['MINING_TYPE'] ||
+                        c.rawAttributes?.['type'] ||
+                        c.rawAttributes?.['TYPE'] ||
+                        c.rawAttributes?.['extraction_method'] ||
+                        c.rawAttributes?.['EXTRACTION_METHOD'] ||
+                        'Not Specified'
+    
+    // Map coded values to descriptive names
+    const miningMethodMap: Record<string, string> = {
+      '1': 'Surface',
+      '2': 'Underground', 
+      '3': 'Alluvial',
+      'Not Specified': 'Not Specified'
+    }
+    
+    const miningMethod = miningMethodMap[rawMiningMethod] || rawMiningMethod
+    
+    acc[miningMethod] = (acc[miningMethod] || 0) + 1
+    return acc
+  }, {} as Record<string, number>)
+
   return {
     totalConcessions,
     activePermits,
@@ -172,6 +202,7 @@ export function calculateStats(concessions: MiningConcession[]): DashboardStats 
     soonToExpire,
     totalAreaCovered,
     concessionsByRegion,
-    concessionsByType
+    concessionsByType,
+    concessionsByMiningMethod
   }
 }

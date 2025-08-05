@@ -22,7 +22,8 @@ export default function Dashboard() {
     soonToExpire: 0,
     totalAreaCovered: 0,
     concessionsByRegion: {},
-    concessionsByType: {}
+    concessionsByType: {},
+    concessionsByMiningMethod: {}
   })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)

@@ -13,16 +13,26 @@ export default function ChartsSection({ stats }: ChartsSectionProps) {
     count
   }))
 
+  const districtData = Object.entries(stats.concessionsByDistrict).map(([district, count]) => ({
+    district,
+    count
+  }))
+
   const typeData = Object.entries(stats.concessionsByType).map(([type, count]) => ({
     type: type.replace('-', ' '),
     count
   }))
 
-  const statusData = [
-    { name: 'Active', value: stats.activePermits },
-    { name: 'Expired', value: stats.expiredPermits },
-    { name: 'Due for Renewal', value: stats.soonToExpire }
-  ]
+  const miningMethodData = Object.entries(stats.concessionsByMiningMethod).map(([method, count]) => ({
+    name: method,  // Use 'name' for Recharts legend
+    value: count,  // Use 'value' for Recharts data
+    method: method, // Keep method for reference
+    count: count
+  }))
+
+  // Debug the mining method data
+  console.log('Mining Method Data for Chart:', miningMethodData)
+  console.log('Raw concessionsByMiningMethod:', stats.concessionsByMiningMethod)
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -46,26 +56,51 @@ export default function ChartsSection({ stats }: ChartsSectionProps) {
         </ResponsiveContainer>
       </div>
 
-      {/* Permit Status Distribution */}
+      {/* Mining Method Distribution */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Permit Status Distribution</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Mining Method Distribution</h3>
         <ResponsiveContainer width="100%" height={300}>
           <PieChart>
             <Pie
-              data={statusData}
+              data={miningMethodData}
               cx="50%"
-              cy="50%"
+              cy="45%"
               labelLine={false}
-              label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-              outerRadius={80}
+              label={({ name, value, percent, cx, cy, midAngle, innerRadius, outerRadius }) => {
+                const percentage = (percent * 100).toFixed(1);
+                const displayName = name === 'Not Specified' ? 'N/A' : name;
+                
+                // Calculate label position with more spacing for small slices
+                const RADIAN = Math.PI / 180;
+                const radius = outerRadius + 25; // Increased spacing from pie
+                const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                
+                return (
+                  <text 
+                    x={x} 
+                    y={y} 
+                    fill="#374151" 
+                    textAnchor={x > cx ? 'start' : 'end'} 
+                    dominantBaseline="central"
+                    fontSize="12"
+                    fontWeight="500"
+                  >
+                    {`${displayName}: ${value} (${percentage}%)`}
+                  </text>
+                );
+              }}
+              outerRadius={60}
               fill="#8884d8"
               dataKey="value"
             >
-              {statusData.map((_, index) => (
+              {miningMethodData.map((_, index) => (
                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
               ))}
             </Pie>
-            <Tooltip />
+            <Tooltip 
+              formatter={(value, name) => [`${value} concessions`, name === 'Not Specified' ? 'Not Specified' : name]}
+            />
           </PieChart>
         </ResponsiveContainer>
       </div>

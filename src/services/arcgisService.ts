@@ -442,22 +442,21 @@ export function calculateStatsFromConcessions(concessions: MiningConcession[]): 
     return expiryDate >= today
   }).length
   
-  // Count expired permits (status is Expired OR expiry date has passed)
+  // Count expired permits ONLY based on expiry date, ignore status field
   const expiredConcessions = concessions.filter(c => {
     const expiryDate = new Date(c.permitExpiryDate)
     // Skip if expiry date is invalid
     if (isNaN(expiryDate.getTime()) || c.permitExpiryDate === 'Not Specified') {
-      return c.status === 'Expired'
+      return false
     }
-    // Expired if status is Expired OR (Active but past expiry date)
-    return c.status === 'Expired' || (expiryDate < today && c.status === 'Active')
+    // Expired if past expiry date
+    return expiryDate < today
   }).length
   
   const totalArea = concessions.reduce((sum, c) => sum + c.size, 0)
   
-  // Calculate expiring soon (active permits within 6 months)
+  // Calculate expiring soon (permits within 6 months) - only based on expiry date
   const expiringSoon = concessions.filter(c => {
-    if (c.status !== 'Active') return false
     const expiryDate = new Date(c.permitExpiryDate)
     return !isNaN(expiryDate.getTime()) && 
            c.permitExpiryDate !== 'Not Specified' &&
@@ -479,6 +478,38 @@ export function calculateStatsFromConcessions(concessions: MiningConcession[]): 
     return acc
   }, {} as Record<string, number>)
 
+  const miningMethodStats = concessions.reduce((acc, c) => {
+    // Get mining method from rawAttributes or default - expanded field search
+    let rawMiningMethod = c.rawAttributes?.['Mining Method'] || 
+                        c.rawAttributes?.['MINING_METHOD'] || 
+                        c.rawAttributes?.['mining_method'] || 
+                        c.rawAttributes?.['MiningMethod'] || 
+                        c.rawAttributes?.['method'] ||
+                        c.rawAttributes?.['METHOD'] ||
+                        c.rawAttributes?.['mining_type'] ||
+                        c.rawAttributes?.['MINING_TYPE'] ||
+                        c.rawAttributes?.['type'] ||
+                        c.rawAttributes?.['TYPE'] ||
+                        c.rawAttributes?.['extraction_method'] ||
+                        c.rawAttributes?.['EXTRACTION_METHOD'] ||
+                        'Not Specified'
+    
+    // Map coded values to descriptive names
+    const miningMethodMap: Record<string, string> = {
+      '1': 'Surface',
+      '2': 'Underground', 
+      '3': 'Alluvial',
+      'Not Specified': 'Not Specified'
+    }
+    
+    const miningMethod = miningMethodMap[rawMiningMethod] || rawMiningMethod
+    
+    if (miningMethod && miningMethod !== 'null' && miningMethod !== '') {
+      acc[miningMethod] = (acc[miningMethod] || 0) + 1
+    }
+    return acc
+  }, {} as Record<string, number>)
+
   return {
     totalConcessions,
     activePermits: activeConcessions,
@@ -486,7 +517,8 @@ export function calculateStatsFromConcessions(concessions: MiningConcession[]): 
     soonToExpire: expiringSoon,
     totalAreaCovered: Math.round(totalArea * 10) / 10,
     concessionsByRegion: regionStats,
-    concessionsByType: typeStats
+    concessionsByType: typeStats,
+    concessionsByMiningMethod: miningMethodStats
   }
 }
 

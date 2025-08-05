@@ -252,32 +252,33 @@ class MiningDataService {
     const stats: DashboardStats = {
       totalConcessions: concessions.length,
       activePermits: concessions.filter(c => {
-        // Only count as active if status is Active AND not expired
-        if (c.status !== 'Active') return false
         const expiryDate = new Date(c.permitExpiryDate)
-        // If expiry date is invalid, consider it active
-        if (isNaN(expiryDate.getTime()) || c.permitExpiryDate === 'Not Specified') return true
-        // Only active if not past expiry date
-        return expiryDate >= today
+        
+        // Count as active if:
+        // 1. Status is Active AND
+        // 2. Either no valid expiry date OR expiry date is in the future
+        return c.status === 'Active' && 
+               (isNaN(expiryDate.getTime()) || 
+                c.permitExpiryDate === 'Not Specified' || 
+                expiryDate >= today)
       }).length,
       expiredPermits: concessions.filter(c => {
-        // Count as expired if status is Expired OR if expiry date has passed
         const expiryDate = new Date(c.permitExpiryDate)
-        // Skip if expiry date is invalid
-        if (isNaN(expiryDate.getTime()) || c.permitExpiryDate === 'Not Specified') {
-          return c.status === 'Expired'
-        }
-        // Expired if status is Expired OR (Active but past expiry date)
-        return c.status === 'Expired' || (expiryDate < today && c.status === 'Active')
+        
+        // Count as expired if:
+        // 1. Has valid expiry date AND
+        // 2. Expiry date is in the past
+        return !isNaN(expiryDate.getTime()) && 
+               c.permitExpiryDate !== 'Not Specified' &&
+               expiryDate < today
       }).length,
-      // Count permits due for renewal (expiring within 6 months)
+      // Count permits due for renewal (expiring within 6 months but not yet expired)
       soonToExpire: concessions.filter(c => {
-        // Only count active permits that are approaching expiry
-        if (c.status !== 'Active') return false
-        
         const expiryDate = new Date(c.permitExpiryDate)
         
-        // Check if expiry date is valid and within the next 6 months
+        // Count as soon to expire if:
+        // 1. Has valid expiry date AND
+        // 2. Expiry date is in the future but within 6 months
         return !isNaN(expiryDate.getTime()) && 
                c.permitExpiryDate !== 'Not Specified' &&
                expiryDate > today && 
@@ -285,12 +286,44 @@ class MiningDataService {
       }).length,
       totalAreaCovered: concessions.reduce((total, c) => total + c.size, 0),
       concessionsByRegion: {},
-      concessionsByType: {}
+      concessionsByDistrict: {},
+      concessionsByType: {},
+      concessionsByMiningMethod: {}
     }
+
+    // Debug permit status calculation
+    console.log('=== PERMIT STATUS DEBUG ===')
+    console.log(`Total concessions: ${stats.totalConcessions}`)
+    console.log(`Active permits: ${stats.activePermits}`)
+    console.log(`Expired permits: ${stats.expiredPermits}`)
+    console.log(`Soon to expire: ${stats.soonToExpire}`)
+    
+    // Calculate permits with other statuses
+    const otherStatusPermits = concessions.filter(c => {
+      const expiryDate = new Date(c.permitExpiryDate)
+      const isExpired = !isNaN(expiryDate.getTime()) && 
+                       c.permitExpiryDate !== 'Not Specified' &&
+                       expiryDate < today
+      const isActive = c.status === 'Active' && 
+                      (isNaN(expiryDate.getTime()) || 
+                       c.permitExpiryDate === 'Not Specified' || 
+                       expiryDate >= today)
+      
+      return !isExpired && !isActive
+    }).length
+    
+    console.log(`Other status permits (Suspended/Under Review/etc): ${otherStatusPermits}`)
+    console.log(`Sum: ${stats.activePermits + stats.expiredPermits + otherStatusPermits}`)
+    console.log('============================')
 
     // Group by region
     concessions.forEach(concession => {
       stats.concessionsByRegion[concession.region] = (stats.concessionsByRegion[concession.region] || 0) + 1
+    })
+
+    // Group by district
+    concessions.forEach(concession => {
+      stats.concessionsByDistrict[concession.district] = (stats.concessionsByDistrict[concession.district] || 0) + 1
     })
 
     // Group by type using raw undertaking field instead of processed permitType
@@ -303,6 +336,51 @@ class MiningDataService {
       
       stats.concessionsByType[undertakingValue] = (stats.concessionsByType[undertakingValue] || 0) + 1
     })
+
+    // Group by mining method using the actual Mining Method field
+    console.log('=== MINING METHOD FIELD DEBUG ===')
+    const sampleConcession = concessions[0]
+    if (sampleConcession?.rawAttributes) {
+      console.log('Sample concession raw attributes keys:', Object.keys(sampleConcession.rawAttributes))
+      console.log('Sample concession raw attributes:', sampleConcession.rawAttributes)
+    }
+    
+    concessions.forEach(concession => {
+      // Look for mining method in various possible field names
+      let rawMiningMethod = concession.rawAttributes?.['Mining Method'] || 
+                          concession.rawAttributes?.['MINING_METHOD'] || 
+                          concession.rawAttributes?.['mining_method'] || 
+                          concession.rawAttributes?.['MiningMethod'] || 
+                          concession.rawAttributes?.['method'] ||
+                          concession.rawAttributes?.['METHOD'] ||
+                          concession.rawAttributes?.['mining_type'] ||
+                          concession.rawAttributes?.['MINING_TYPE'] ||
+                          concession.rawAttributes?.['type'] ||
+                          concession.rawAttributes?.['TYPE'] ||
+                          concession.rawAttributes?.['extraction_method'] ||
+                          concession.rawAttributes?.['EXTRACTION_METHOD'] ||
+                          'Not Specified'
+      
+      // Map coded values to descriptive names
+      const miningMethodMap: Record<string, string> = {
+        '1': 'Surface',
+        '2': 'Underground', 
+        '3': 'Alluvial',
+        'Not Specified': 'Not Specified'
+      }
+      
+      const miningMethod = miningMethodMap[rawMiningMethod] || rawMiningMethod
+      
+      // Debug first few entries
+      if (stats.concessionsByMiningMethod && Object.keys(stats.concessionsByMiningMethod).length < 5) {
+        console.log(`Concession ${concession.name}: mining method = "${miningMethod}"`)
+      }
+      
+      stats.concessionsByMiningMethod[miningMethod] = (stats.concessionsByMiningMethod[miningMethod] || 0) + 1
+    })
+    
+    console.log('Final mining method stats:', stats.concessionsByMiningMethod)
+    console.log('=====================================')
 
     return stats
   }

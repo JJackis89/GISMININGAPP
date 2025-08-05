@@ -5,6 +5,7 @@ import { DashboardStats } from '../types'
 import miningDataService from '../services/miningDataService'
 import { dataRefreshService } from '../services/dataRefreshService'
 import { BarChart, TrendingUp, PieChart, Activity, MapPin } from 'lucide-react'
+import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 
 export default function AnalyticsPage() {
   const [stats, setStats] = useState<DashboardStats>({
@@ -14,7 +15,9 @@ export default function AnalyticsPage() {
     soonToExpire: 0,
     totalAreaCovered: 0,
     concessionsByRegion: {},
-    concessionsByType: {}
+    concessionsByDistrict: {},
+    concessionsByType: {},
+    concessionsByMiningMethod: {}
   })
   const [loading, setLoading] = useState(true)
 
@@ -40,7 +43,9 @@ export default function AnalyticsPage() {
           soonToExpire: 0,
           totalAreaCovered: 0,
           concessionsByRegion: {},
-          concessionsByType: {}
+          concessionsByDistrict: {},
+          concessionsByType: {},
+          concessionsByMiningMethod: {}
         })
       } finally {
         setLoading(false)
@@ -157,35 +162,27 @@ export default function AnalyticsPage() {
       <ChartsSection stats={stats} />
 
       {/* Additional Analytics */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Permit Status Summary</h3>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Active Permits</span>
-              <span className="font-semibold text-epa-green-600">{stats.activePermits}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Expired Permits</span>
-              <span className="font-semibold text-red-600">{stats.expiredPermits}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Due for Renewal</span>
-              <span className="font-semibold text-epa-orange-600">{stats.soonToExpire}</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Regional Distribution</h3>
-          <div className="space-y-3">
-            {Object.entries(stats.concessionsByRegion).map(([region, count]) => (
-              <div key={region} className="flex justify-between items-center">
-                <span className="text-gray-600">{region}</span>
-                <span className="font-semibold text-gray-900">{count}</span>
-              </div>
-            ))}
-          </div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">District Distribution</h3>
+          <ResponsiveContainer width="100%" height={400}>
+            <RechartsBarChart data={Object.entries(stats.concessionsByDistrict).map(([district, count]) => ({
+              district,
+              count
+            }))}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis 
+                dataKey="district" 
+                angle={-45}
+                textAnchor="end"
+                height={80}
+                fontSize={12}
+              />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="count" fill="#f97316" />
+            </RechartsBarChart>
+          </ResponsiveContainer>
         </div>
       </div>
     </div>

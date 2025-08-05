@@ -59,18 +59,16 @@ export default function AnalyticsPanel({ dataService, concessions }: AnalyticsPa
           return expiryDate >= today
         }).length,
         expiredPermits: concessions.filter(c => {
-          // Count as expired if status is Expired OR if expiry date has passed
+          // Count as expired ONLY based on expiry date, ignore status field
           const expiryDate = new Date(c.permitExpiryDate)
           // Skip if expiry date is invalid
           if (isNaN(expiryDate.getTime()) || c.permitExpiryDate === 'Not Specified') {
-            return c.status === 'Expired'
+            return false
           }
-          // Expired if status is Expired OR (Active but past expiry date)
-          return c.status === 'Expired' || (expiryDate < today && c.status === 'Active')
+          // Expired if past expiry date
+          return expiryDate < today
         }).length,
         soonToExpire: concessions.filter(c => {
-          // Only count active permits that are approaching expiry
-          if (c.status !== 'Active') return false
           const expiryDate = new Date(c.permitExpiryDate)
           // Check if expiry date is valid and within the next 6 months
           return !isNaN(expiryDate.getTime()) && 
@@ -92,6 +90,38 @@ export default function AnalyticsPanel({ dataService, concessions }: AnalyticsPa
           // Only include records with valid permitType data from hosted layer
           if (c.permitType && c.permitType !== 'Not Specified' && c.permitType !== 'null' && c.permitType !== '') {
             acc[c.permitType] = (acc[c.permitType] || 0) + 1
+          }
+          return acc
+        }, {} as Record<string, number>),
+        
+        concessionsByMiningMethod: concessions.reduce((acc, c) => {
+          // Get mining method from rawAttributes or default - expanded field search
+          let rawMiningMethod = c.rawAttributes?.['Mining Method'] || 
+                              c.rawAttributes?.['MINING_METHOD'] || 
+                              c.rawAttributes?.['mining_method'] || 
+                              c.rawAttributes?.['MiningMethod'] || 
+                              c.rawAttributes?.['method'] ||
+                              c.rawAttributes?.['METHOD'] ||
+                              c.rawAttributes?.['mining_type'] ||
+                              c.rawAttributes?.['MINING_TYPE'] ||
+                              c.rawAttributes?.['type'] ||
+                              c.rawAttributes?.['TYPE'] ||
+                              c.rawAttributes?.['extraction_method'] ||
+                              c.rawAttributes?.['EXTRACTION_METHOD'] ||
+                              'Not Specified'
+          
+          // Map coded values to descriptive names
+          const miningMethodMap: Record<string, string> = {
+            '1': 'Surface',
+            '2': 'Underground', 
+            '3': 'Alluvial',
+            'Not Specified': 'Not Specified'
+          }
+          
+          const miningMethod = miningMethodMap[rawMiningMethod] || rawMiningMethod
+          
+          if (miningMethod && miningMethod !== 'null' && miningMethod !== '') {
+            acc[miningMethod] = (acc[miningMethod] || 0) + 1
           }
           return acc
         }, {} as Record<string, number>)

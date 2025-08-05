@@ -84,5 +84,7 @@ export interface DashboardStats {
   soonToExpire: number
   totalAreaCovered: number
   concessionsByRegion: Record<string, number>
+  concessionsByDistrict: Record<string, number>
   concessionsByType: Record<string, number>
+  concessionsByMiningMethod: Record<string, number>
 }
