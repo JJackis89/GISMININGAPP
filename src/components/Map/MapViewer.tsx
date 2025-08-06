@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react'
-import SearchWidget from './SearchWidget'
 
 interface MapViewerProps {
   className?: string
@@ -18,7 +17,6 @@ const MapViewer: React.FC<MapViewerProps> = ({
   const viewRef = useRef<any>(null)
   const [mapStatus, setMapStatus] = useState<'loading' | 'loaded' | 'error'>('loading')
   const [errorMessage, setErrorMessage] = useState<string>('')
-  const [concessionsData, setConcessionsData] = useState<any[]>([])
   const initializationRef = useRef<boolean>(false)
   const basemapGalleryRef = useRef<any>(null)
   const measurementWidgetRef = useRef<any>(null)
@@ -374,29 +372,6 @@ const MapViewer: React.FC<MapViewerProps> = ({
           console.log('🏷️ Layer fields:', miningLayer.fields?.map((f: any) => f.name) || 'No fields')
           console.log('✅ Layer loaded state:', miningLayer.loaded)
           
-          // Fetch concessions data for search widget
-          console.log('📦 Fetching concessions data for search...')
-          const require = (window as any).require
-          
-          require(['esri/rest/support/Query'], (Query: any) => {
-            const query = new Query()
-            query.where = '1=1' // Get all features
-            query.outFields = ['*']
-            query.returnGeometry = false // We only need attributes for search
-            
-            miningLayer.queryFeatures(query).then((results: any) => {
-              if (results.features && results.features.length > 0) {
-                const concessionsAttributes = results.features.map((feature: any) => feature.attributes)
-                console.log(`✅ Loaded ${concessionsAttributes.length} concessions for search:`, concessionsAttributes.slice(0, 3))
-                setConcessionsData(concessionsAttributes)
-              } else {
-                console.warn('⚠️ No concessions data found')
-              }
-            }).catch((error: any) => {
-              console.error('❌ Error fetching concessions data:', error)
-            })
-          })
-          
           // Dynamically populate popup template with all fields from the hosted layer
           if (miningLayer.fields && miningLayer.fields.length > 0) {
             console.log('🔧 Setting up dynamic popup template with all fields...')
@@ -600,7 +575,7 @@ const MapViewer: React.FC<MapViewerProps> = ({
       
       const require = (window as any).require
       
-      require(['esri/widgets/Zoom', 'esri/widgets/BasemapGallery', 'esri/widgets/Expand'], (Zoom: any, BasemapGallery: any, Expand: any) => {
+      require(['esri/widgets/Zoom', 'esri/widgets/BasemapGallery', 'esri/widgets/Expand', 'esri/widgets/Search'], (Zoom: any, BasemapGallery: any, Expand: any, Search: any) => {
         try {
           // Add basic zoom widget (hidden)
           const zoomWidget = new Zoom({
@@ -609,6 +584,40 @@ const MapViewer: React.FC<MapViewerProps> = ({
           
           view.ui.add(zoomWidget, 'top-right')
           zoomWidget.domNode.style.display = 'none' // Hide the default zoom
+
+          // Create ArcGIS Search widget
+          const searchWidget = new Search({
+            view: view,
+            placeholder: "Search mining concessions, districts...",
+            maxResults: 8,
+            maxSuggestions: 6,
+            suggestionsEnabled: true,
+            minSuggestCharacters: 2,
+            includeDefaultSources: false, // Disable default world geocoding
+            popupEnabled: true,
+            resultGraphicEnabled: true
+          })
+          
+          // Store search widget reference
+          searchWidgetRef.current = searchWidget
+          
+          // Add search widget to the map UI with custom positioning
+          view.ui.add(searchWidget, {
+            position: "manual" // We'll position it manually with CSS
+          })
+          
+          // Position the search widget below the banner using CSS
+          setTimeout(() => {
+            if (searchWidget.domNode) {
+              searchWidget.domNode.style.position = 'absolute'
+              searchWidget.domNode.style.top = '70px' // Below the banner
+              searchWidget.domNode.style.left = '10px'
+              searchWidget.domNode.style.zIndex = '45' // Below banner (z-40) but above map
+              searchWidget.domNode.style.maxWidth = '300px'
+            }
+          }, 100)
+          
+          console.log('✅ ArcGIS Search widget created and positioned below banner')
           
           // Create basemap gallery
           const basemapGallery = new BasemapGallery({
@@ -735,76 +744,6 @@ const MapViewer: React.FC<MapViewerProps> = ({
                   <div className="w-2 h-2 bg-green-300 rounded-full animate-pulse"></div>
                   <span>Live Data</span>
                 </div>
-              </div>
-            </div>
-          </div>
-        )}
-      
-        {/* Professional Controls - Top Left */}
-        {mapStatus === 'loaded' && (
-          <div className="absolute top-16 left-4 z-50 flex flex-col space-y-3">
-            {/* Enhanced Search Panel */}
-            <div className="bg-white rounded-lg shadow-xl border border-gray-300 overflow-hidden">
-              <div className="bg-gray-50 px-3 py-2 border-b border-gray-200">
-                <h3 className="text-xs font-semibold text-gray-700 flex items-center">
-                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                  </svg>
-                  Search & Locate
-                </h3>
-              </div>
-              <div className="p-3">
-                <SearchWidget
-                  onSearchSelect={handleSearchSelect}
-                  concessions={concessionsData}
-                  className="w-72"
-                />
-              </div>
-            </div>
-            
-            {/* Location Panel */}
-            <div className="bg-white rounded-lg shadow-xl border border-gray-300 overflow-hidden">
-              <div className="bg-gray-50 px-3 py-2 border-b border-gray-200">
-                <h3 className="text-xs font-semibold text-gray-700 flex items-center">
-                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                  </svg>
-                  Current Location
-                </h3>
-              </div>
-              <div className="p-3">
-                <button 
-                  onClick={() => {
-                    if (navigator.geolocation) {
-                      navigator.geolocation.getCurrentPosition(
-                        (position) => {
-                          const { latitude, longitude } = position.coords
-                          if (viewRef.current) {
-                            viewRef.current.center = [longitude, latitude]
-                            viewRef.current.zoom = 12
-                            console.log('📍 Located user at:', latitude, longitude)
-                            alert('Found your location!')
-                          }
-                        },
-                        (error) => {
-                          console.error('Geolocation error:', error)
-                          alert('Could not get your location. Please enable location services.')
-                        }
-                      )
-                    } else {
-                      alert('Geolocation not supported by this browser.')
-                    }
-                  }}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-md text-sm font-medium flex items-center justify-center space-x-2 transition-colors duration-200"
-                  title="Find My Location"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                  </svg>
-                  <span>My Location</span>
-                </button>
               </div>
             </div>
           </div>
