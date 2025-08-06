@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
+import SearchWidget from './SearchWidget'
 
 interface MapViewerProps {
   className?: string
@@ -17,6 +18,7 @@ const MapViewer: React.FC<MapViewerProps> = ({
   const viewRef = useRef<any>(null)
   const [mapStatus, setMapStatus] = useState<'loading' | 'loaded' | 'error'>('loading')
   const [errorMessage, setErrorMessage] = useState<string>('')
+  const [concessionsData, setConcessionsData] = useState<any[]>([])
   const initializationRef = useRef<boolean>(false)
   const basemapGalleryRef = useRef<any>(null)
   const measurementWidgetRef = useRef<any>(null)
@@ -79,6 +81,78 @@ const MapViewer: React.FC<MapViewerProps> = ({
         console.error('❌ Error creating highlight:', error)
       }
     })
+  }
+
+  // Handle search widget selection
+  const handleSearchSelect = (suggestion: any) => {
+    console.log('🎯 Search selection:', suggestion)
+    
+    if (!viewRef.current) return
+
+    const require = (window as any).require
+    
+    if (suggestion.type === 'concession') {
+      // Zoom to specific concession
+      require(['esri/rest/support/Query'], (Query: any) => {
+        const query = new Query()
+        query.where = `OBJECTID = ${suggestion.data.OBJECTID}` // Use OBJECTID for precise match
+        query.returnGeometry = true
+        query.outFields = ['*']
+        
+        if (miningLayerRef.current) {
+          miningLayerRef.current.queryFeatures(query).then((results: any) => {
+            if (results.features && results.features.length > 0) {
+              const feature = results.features[0]
+              
+              // Zoom to the feature
+              if (feature.geometry) {
+                const extent = feature.geometry.extent || feature.geometry
+                viewRef.current.goTo(extent.expand(2))
+                
+                // Show popup after zoom
+                setTimeout(() => {
+                  viewRef.current.popup.open({
+                    features: [feature],
+                    location: feature.geometry.centroid || feature.geometry.center
+                  })
+                }, 1000)
+              }
+            }
+          }).catch((error: any) => {
+            console.error('❌ Error finding concession:', error)
+          })
+        }
+      })
+    } else if (suggestion.type === 'district' || suggestion.type === 'region') {
+      // Zoom to district or region
+      const fieldName = suggestion.type === 'district' ? 'District' : 'Region'
+      const fieldValue = suggestion.data[suggestion.type]
+      
+      require(['esri/rest/support/Query'], (Query: any) => {
+        const query = new Query()
+        query.where = `${fieldName} = '${fieldValue}'`
+        query.returnGeometry = true
+        query.outFields = ['*']
+        
+        if (miningLayerRef.current) {
+          miningLayerRef.current.queryFeatures(query).then((results: any) => {
+            if (results.features && results.features.length > 0) {
+              require(['esri/geometry/geometryEngine'], (geometryEngine: any) => {
+                // Create union of all geometries in the district/region
+                const geometries = results.features.map((f: any) => f.geometry)
+                const union = geometryEngine.union(geometries)
+                
+                if (union && union.extent) {
+                  viewRef.current.goTo(union.extent.expand(1.2))
+                }
+              })
+            }
+          }).catch((error: any) => {
+            console.error(`❌ Error finding ${suggestion.type}:`, error)
+          })
+        }
+      })
+    }
   }
 
   useEffect(() => {
@@ -299,6 +373,29 @@ const MapViewer: React.FC<MapViewerProps> = ({
           console.log('📊 Layer extent:', miningLayer.fullExtent)
           console.log('🏷️ Layer fields:', miningLayer.fields?.map((f: any) => f.name) || 'No fields')
           console.log('✅ Layer loaded state:', miningLayer.loaded)
+          
+          // Fetch concessions data for search widget
+          console.log('📦 Fetching concessions data for search...')
+          const require = (window as any).require
+          
+          require(['esri/rest/support/Query'], (Query: any) => {
+            const query = new Query()
+            query.where = '1=1' // Get all features
+            query.outFields = ['*']
+            query.returnGeometry = false // We only need attributes for search
+            
+            miningLayer.queryFeatures(query).then((results: any) => {
+              if (results.features && results.features.length > 0) {
+                const concessionsAttributes = results.features.map((feature: any) => feature.attributes)
+                console.log(`✅ Loaded ${concessionsAttributes.length} concessions for search:`, concessionsAttributes.slice(0, 3))
+                setConcessionsData(concessionsAttributes)
+              } else {
+                console.warn('⚠️ No concessions data found')
+              }
+            }).catch((error: any) => {
+              console.error('❌ Error fetching concessions data:', error)
+            })
+          })
           
           // Dynamically populate popup template with all fields from the hosted layer
           if (miningLayer.fields && miningLayer.fields.length > 0) {
@@ -656,77 +753,27 @@ const MapViewer: React.FC<MapViewerProps> = ({
                   Search & Locate
                 </h3>
               </div>
-              <div className="p-3 space-y-2">
-                <input 
-                  type="text"
-                  placeholder="Search concessions, districts, towns..."
-                  className="w-56 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      const value = (e.target as HTMLInputElement).value
-                      if (value) {
-                        console.log('🔍 Searching for:', value)
-                        // Search in both layers
-                        const require = (window as any).require
-                        require(['esri/rest/support/Query'], (Query: any) => {
-                          
-                          // Search mining concessions first
-                          if (miningLayerRef.current) {
-                            const miningQuery = new Query({
-                              where: `Name LIKE '%${value}%' OR ContactPerson LIKE '%${value}%' OR Town LIKE '%${value}%' OR District LIKE '%${value}%' OR Region LIKE '%${value}%'`,
-                              returnGeometry: true,
-                              outFields: ['*']
-                            })
-                            
-                            miningLayerRef.current.queryFeatures(miningQuery).then((results: any) => {
-                              if (results.features.length > 0) {
-                                // Zoom to first result
-                                viewRef.current.goTo(results.features[0].geometry.extent.expand(2))
-                                // Show popup for first result
-                                viewRef.current.popup.open({
-                                  features: [results.features[0]],
-                                  location: results.features[0].geometry.centroid
-                                })
-                                alert(`Found ${results.features.length} matching concessions. Zoomed to first result.`)
-                                return
-                              }
-                              
-                              // If no mining concessions found, search districts
-                              if (environmentalLayerRef.current) {
-                                const districtsQuery = new Query({
-                                  where: `district LIKE '%${value}%' OR region LIKE '%${value}%' OR capital LIKE '%${value}%'`,
-                                  returnGeometry: true,
-                                  outFields: ['*']
-                                })
-                                
-                                environmentalLayerRef.current.queryFeatures(districtsQuery).then((districtResults: any) => {
-                                  if (districtResults.features.length > 0) {
-                                    // Zoom to first district result
-                                    viewRef.current.goTo(districtResults.features[0].geometry.extent.expand(1.1))
-                                    // Show popup for first result
-                                    viewRef.current.popup.open({
-                                      features: [districtResults.features[0]],
-                                      location: districtResults.features[0].geometry.centroid
-                                    })
-                                    alert(`Found ${districtResults.features.length} matching districts. Zoomed to first result.`)
-                                  } else {
-                                    alert('No matching concessions or districts found.')
-                                  }
-                                }).catch((error: any) => {
-                                  console.error('Districts search error:', error)
-                                  alert('Search failed. Please try again.')
-                                })
-                              }
-                            }).catch((error: any) => {
-                              console.error('Mining concessions search error:', error)
-                              alert('Search failed. Please try again.')
-                            })
-                          }
-                        })
-                      }
-                    }
-                  }}
+              <div className="p-3">
+                <SearchWidget
+                  onSearchSelect={handleSearchSelect}
+                  concessions={concessionsData}
+                  className="w-72"
                 />
+              </div>
+            </div>
+            
+            {/* Location Panel */}
+            <div className="bg-white rounded-lg shadow-xl border border-gray-300 overflow-hidden">
+              <div className="bg-gray-50 px-3 py-2 border-b border-gray-200">
+                <h3 className="text-xs font-semibold text-gray-700 flex items-center">
+                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                  </svg>
+                  Current Location
+                </h3>
+              </div>
+              <div className="p-3">
                 <button 
                   onClick={() => {
                     if (navigator.geolocation) {
